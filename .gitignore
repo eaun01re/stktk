@@ -1,0 +1,14 @@
+# Binaries
+build/
+src-build/
+src/build/
+
+# QtCtreator CMake
+CMakeLists.txt.user*
+
+# Doxygen
+doc/
+
+# VS Code
+.vscode
+.cache
