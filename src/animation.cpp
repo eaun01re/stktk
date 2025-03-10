@@ -48,6 +48,16 @@ void Animation::update(const Duration &elapsed)
     {
         m_currentSpriteIndex = 0;
     }
-    m_rect.left = m_spritesIndices[m_currentSpriteIndex].second * m_rect.width;
-    m_rect.top = m_spritesIndices[m_currentSpriteIndex].first * m_rect.height;
+
+    m_rect.top = m_spritesIndices[m_currentSpriteIndex].row * m_rect.height;
+    if (m_spritesIndices[m_currentSpriteIndex].mirrored)
+    {
+        m_rect.left = (m_spritesIndices[m_currentSpriteIndex].column + 1) * std::abs(m_rect.width);
+        m_rect.width = -std::abs(m_rect.width);
+    }
+    else
+    {
+        m_rect.width = std::abs(m_rect.width);
+        m_rect.left = m_spritesIndices[m_currentSpriteIndex].column * m_rect.width;
+    }
 }

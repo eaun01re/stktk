@@ -128,7 +128,6 @@ void Game::keyPressed(const sf::Event::KeyEvent &key)
     default:
         break;
     }
-    //
 }
 
 

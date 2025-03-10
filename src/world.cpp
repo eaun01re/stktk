@@ -11,6 +11,8 @@ namespace
 {
 
 constexpr int INITIAL_BOX_QUANTITY = 12;
+/// Количество нижних рядов, на которых разрешено прыгать.
+constexpr int ROWS_WITH_ALLOWED_JUMP = 3;
 
 }
 
@@ -131,7 +133,7 @@ void World::setup()
     // игровой области, ось X направлена вправо, ось Y направлена вверх.
     // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
     m_transform.translate(BOTTOM_LEFT_CORNER);
-    m_transform.scale({1, -1});
+    m_transform.scale(sf::Vector2f(1, -1));
 
     for (auto &column : m_boxesLocations)
     {
@@ -255,27 +257,32 @@ bool World::canPlayerMove(
         return false;
     case Player::Direction::Left:
         return
-            ((column > 0 && row >= m_boxesLocations[column - 1].size()) ||
+            (column > 0 && row >= m_boxesLocations[column - 1].size()) ||
             (column > 1 && row == m_boxesLocations[column - 1].size() - 1 &&
-            row >= m_boxesLocations[column - 2].size()));
+            row >= m_boxesLocations[column - 2].size());
     case Player::Direction::Right:
         return
-            ((column < BOXES_COLUMNS - 1 && row >= m_boxesLocations[column + 1].size()) ||
-             (column < BOXES_COLUMNS - 2 && row == m_boxesLocations[column + 1].size() - 1 &&
-              row >= m_boxesLocations[column + 2].size()));
+            (column < BOXES_COLUMNS - 1 && row >= m_boxesLocations[column + 1].size()) ||
+            (column < BOXES_COLUMNS - 2 && row == m_boxesLocations[column + 1].size() - 1 &&
+            row >= m_boxesLocations[column + 2].size());
     case Player::Direction::UpLeft:
         return
-            (column > 1 &&
+            playerRow < ROWS_WITH_ALLOWED_JUMP &&
+            column > 1 &&
+               row == m_boxesLocations[column].size() &&
             row >= m_boxesLocations[column - 1].size() &&
-            row + 1 >= m_boxesLocations[column - 2].size());
+            row + 1 >= m_boxesLocations[column - 2].size();
     case Player::Direction::UpRight:
         return
-            (column < BOXES_COLUMNS - 2 &&
+            playerRow < ROWS_WITH_ALLOWED_JUMP &&
+            column < BOXES_COLUMNS - 2 &&
+            row == m_boxesLocations[column].size() &&
             row >= m_boxesLocations[column + 1].size() &&
-            row + 1 >= m_boxesLocations[column + 2].size());
+            row + 1 >= m_boxesLocations[column + 2].size();
     case Player::Direction::Up:
-        // Нельзя прыгать, стоя на 3 ящиках.
-        return playerRow <= 2;
+        return
+            playerRow < ROWS_WITH_ALLOWED_JUMP &&
+            row == m_boxesLocations[column].size();
     default:
         return false;
     }

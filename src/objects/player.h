@@ -39,6 +39,6 @@ private:
 
 private:
     std::unique_ptr<Animation> m_animation;
-    Direction m_direction{ Direction::None };
     Direction m_nextDirection{ Direction::None };
+    bool m_lookLeft{ true };
 };

@@ -8,9 +8,26 @@
 #include "clock.h"
 
 
-/// Положение фрагмента текстуры (номер строки, номер столбца)
+/// Положение фрагмента текстуры (спрайта) в таблице.
 /// Размеры фрагмента считаются известными.
-using TextureSpriteIndex = std::pair<unsigned int, unsigned int>;
+struct TextureSpriteIndex
+{
+    /*!
+     * \param[in] row Номер строки в таблице спрайтов.
+     * \param[in] column Номер колонки в таблице спрайтов.
+     * \param[in] mirrored Признак отражения по горизонтали.
+     */
+    TextureSpriteIndex(unsigned int row, unsigned int column, bool mirrored)
+        : row(row)
+        , column(column)
+        , mirrored(mirrored)
+    {
+    }
+
+    unsigned int row;
+    unsigned int column;
+    bool mirrored{ false };
+};
 
 using AnimationSpriteIndices = std::vector<TextureSpriteIndex>;
 
@@ -28,7 +45,7 @@ public:
     const sf::IntRect& rect() const noexcept;
 
 private:
-    Duration m_switchTime;
+    const Duration m_switchTime;
 
     AnimationSpriteIndices m_spritesIndices;
     sf::Vector2u m_currentSprite;
