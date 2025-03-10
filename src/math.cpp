@@ -2,12 +2,21 @@
 
 #include <cmath>
 
-#include "box.h"
+#include "objects/box.h"
 
 
 bool isTolerant(const sf::Vector2f &vector)
 {
     return (std::max(std::abs(vector.x), std::abs(vector.y)) >= TOLERANCE);
+}
+
+
+sf::Vector2f multiply(const sf::Vector2f &vector, double a)
+{
+    sf::Vector2f result = vector;
+    result.x *= a;
+    result.y *= a;
+    return result;
 }
 
 

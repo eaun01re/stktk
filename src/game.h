@@ -1,8 +1,6 @@
 #pragma once
 
 
-#define USE_SFML_CLOCK
-
 #include "window.h"
 #include "world.h"
 
@@ -32,9 +30,9 @@ private:
 
     World m_world;
 
-#ifdef USE_SFML_CLOCK
+#if defined(USE_SFML_CLOCK)
     sf::Clock m_clock;
-#else
+#elif defined(USE_STD_CLOCK)
     std::chrono::high_resolution_clock::time_point m_time;
 #endif
     Duration m_elapsed;

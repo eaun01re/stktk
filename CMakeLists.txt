@@ -22,10 +22,26 @@ message(STATUS "${PROJECT_NAME} v${VERSION_MAJOR}.${VERSION_MINOR}")
 # Project sources.
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 include_directories(${SOURCE_DIR})
-file(GLOB SOURCES_MAIN
+file(GLOB_RECURSE SOURCES_MAIN
     ${SOURCE_DIR}/*.cpp)
-file(GLOB HEADERS_MAIN
+file(GLOB_RECURSE HEADERS_MAIN
     ${SOURCE_DIR}/*.h)
+
+set(RENDER_TIMER AUTO CACHE STRING "Timer interval generator")
+set_property(
+    CACHE RENDER_TIMER
+    PROPERTY STRINGS
+    SFML # sf::Clock
+    STD # std::chrono::high_resolution_clock
+    FIXED # Fixed update interval. For debugging.
+    )
+if(RENDER_TIMER STREQUAL "SFML")
+    add_definitions(-DUSE_SFML_CLOCK)
+elseif(ENABLE_SOMETHING STREQUAL "STD")
+    add_definitions(-DUSE_STD_CLOCK)
+else()
+    add_definitions(-DUSE_FIXED_CLOCK)
+endif()
 
 set(VERSION_DIR ${SOURCE_DIR}/version)
 file(GLOB SOURCES_VERSION ${VERSION_DIR}/*.cpp)

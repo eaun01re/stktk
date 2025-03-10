@@ -123,12 +123,6 @@ void Window::draw(sf::Drawable &l_drawable)
 }
 
 
-//void Window::setResizeCallback(ResizeCallback callback)
-//{
-//    m_resizeCallback = std::move(callback);
-//}
-
-
 sf::Vector2u Window::windowSize()
 {
     return m_windowSize;

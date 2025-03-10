@@ -5,21 +5,29 @@ Animation::Animation(
     const sf::Texture &texture,
     const sf::Vector2u &spritesQuantity,
     const Duration &switchTime)
-    : m_spritesQuantity(spritesQuantity)
-    , m_switchTime(switchTime)
+    : m_switchTime(switchTime)
 {
-    m_rect.width = texture.getSize().x / float(spritesQuantity.x);
-    m_rect.height = texture.getSize().y / float(spritesQuantity.y);
+    m_rect.width = texture.getSize().x / float(spritesQuantity.y);
+    m_rect.height = texture.getSize().y / float(spritesQuantity.x);
 }
 
 
 void Animation::setSpritesIndices(const AnimationSpriteIndices &indices)
 {
     m_spritesIndices = indices;
+
+    // Принудительное обновление анимации после смены спрайтов.
+    m_totalTime = m_switchTime;
 }
 
 
-const sf::IntRect &Animation::rect() const
+unsigned int Animation::currentSpriteIndex() const noexcept
+{
+    return m_currentSpriteIndex;
+}
+
+
+const sf::IntRect& Animation::rect() const noexcept
 {
     return m_rect;
 }

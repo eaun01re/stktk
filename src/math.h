@@ -9,6 +9,8 @@ constexpr float TOLERANCE = 1.0e-2;
 
 bool isTolerant(const sf::Vector2f &vector);
 
+sf::Vector2f multiply(const sf::Vector2f &vector, double a);
+
 /// Применяется для вертикального отражение текстуры.
 /// https://en.sfml-dev.org/forums/index.php?topic=12947.0
 sf::IntRect mirrorVertical(const sf::IntRect &rect);

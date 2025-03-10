@@ -7,7 +7,7 @@
 // https://github.com/sschellhoff/SFMLGameDevelopmentByExample/tree/master/chapter_03
 
 // [ C++ & SFML - Simple 2D Games ] - Easy Platformer pt.11 - New Input System + Add & Remove tiles!
-// https://www.youtube.com/watch?v=g6qxn2T0guo&list=PL6xSOsbVA1eb_QqMTTcql_3PdOiE928up&index=47
+// https://www.youtube.com/watch?v=g6qxn2T0guo&list=PL6xSOsbVA1eb_QqMTTcql_3PdOiE928up
 
 // Siemens A52
 // https://www.youtube.com/shorts/iWkPpjMQF4U
@@ -19,6 +19,8 @@
 // а пролетает на одну клетку дальше! как только ящик после толчка оказывается в воздухе его можно успеть толкнуть
 // В момент толчка ящик ненадолго зависает в воздухе, после чего продолжает падать с замедленной скоростью
 // https://www.youtube.com/watch?v=6PaLFAZN518&t=75
+// Можно прыгать по диагонали, если ящик, на который в итоге встанет игрок, еще падает, но успеет остановиться к моменту приземления игрока.
+// Кран может проехать, не скинув ящика
 
 
 int main()

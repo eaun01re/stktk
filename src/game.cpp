@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "log.h"
-#include "world.h"
 #include "version/version.h"
 
 
@@ -42,7 +41,6 @@ Game::Game()
         std::bind(&Game::windowResized, this, std::placeholders::_1),
         std::bind(&Game::keyPressed, this, std::placeholders::_1))
 {
-//    m_window.setResizeCallback(std::bind(&Game::windowResized, this, std::placeholders::_1));
     restartClock();
 }
 
@@ -66,7 +64,6 @@ bool Game::init(std::string* errorDescription)
         textureBackground,
         texturePlayer,
         textureBox);
-//    m_player.init(texturePlayer);
     return result;
 }
 
@@ -79,13 +76,16 @@ bool Game::init(std::string* errorDescription)
 
 void Game::restartClock()
 {
-#ifdef USE_SFML_CLOCK
+#if defined(USE_SFML_CLOCK)
     // m_elapsed = fromMicroseconds(m_clock.restart().asMicroseconds());
+    // Фиксированный интервал, для отладки.
     m_elapsed = fromMicroseconds(1e6 / FPS_LIMIT);
-#else
+#elif defined(USE_STD_CLOCK)
     const std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
     m_elapsed = std::chrono::duration_cast<Duration>(now - m_time);
     m_time = std::chrono::high_resolution_clock::now();
+#else
+    m_elapsed = fromMicroseconds(1e6 / FPS_LIMIT);
 #endif
 }
 

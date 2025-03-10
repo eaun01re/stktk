@@ -24,10 +24,10 @@ public:
         const Duration &switchTime);
     void setSpritesIndices(const AnimationSpriteIndices &indices);
     void update(const Duration &elapsed);
-    const sf::IntRect& rect() const;
+    unsigned int currentSpriteIndex() const noexcept;
+    const sf::IntRect& rect() const noexcept;
 
 private:
-    sf::Vector2u m_spritesQuantity;
     Duration m_switchTime;
 
     AnimationSpriteIndices m_spritesIndices;
