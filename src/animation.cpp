@@ -17,6 +17,7 @@ void Animation::setSpritesIndices(const AnimationSpriteIndices &indices)
     m_spritesIndices = indices;
 
     // Принудительное обновление анимации после смены спрайтов.
+    // FIXME: Устранить подёргивание при назначении анимации.
     m_totalTime = m_switchTime;
 }
 

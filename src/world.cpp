@@ -47,6 +47,7 @@ void World::generateStartPosition(const std::optional<unsigned int> &position)
 
     if (position.has_value() && position.value() < INITIAL_POSITIONS.size())
     {
+        LOG_DEBUG("Set predefined initial position №" << position.value() << ".");
         generatePredefinedPosition(INITIAL_POSITIONS.at(position.value()));
     }
     else
@@ -256,20 +257,13 @@ bool World::canPlayerMove(
     case Player::Direction::None:
         return false;
     case Player::Direction::Left:
-        return
-            (column > 0 && row >= m_boxesLocations[column - 1].size()) ||
-            (column > 1 && row == m_boxesLocations[column - 1].size() - 1 &&
-            row >= m_boxesLocations[column - 2].size());
+        return canPlayerMoveLeftOrRight(row, column, true);
     case Player::Direction::Right:
-        return
-            (column < BOXES_COLUMNS - 1 && row >= m_boxesLocations[column + 1].size()) ||
-            (column < BOXES_COLUMNS - 2 && row == m_boxesLocations[column + 1].size() - 1 &&
-            row >= m_boxesLocations[column + 2].size());
+        return canPlayerMoveLeftOrRight(row, column, false);
     case Player::Direction::UpLeft:
         return
             playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            column > 1 &&
-               row == m_boxesLocations[column].size() &&
+            column > 1 && row == m_boxesLocations[column].size() &&
             row >= m_boxesLocations[column - 1].size() &&
             row + 1 >= m_boxesLocations[column - 2].size();
     case Player::Direction::UpRight:
@@ -288,6 +282,40 @@ bool World::canPlayerMove(
     }
 
     return false;
+}
+
+
+bool World::canPlayerMoveLeftOrRight(
+    Object::Coordinate row,
+    Object::Coordinate column,
+    bool left) const
+{
+    const int k = left ? -1 : 1;
+
+    if (column <= 0 || column >= BOXES_COLUMNS - 1)
+    {
+        return false;
+    }
+
+    // Переход на соседнюю стопку без толкания ящика.
+    // Игрок должен стоять на ящике, либо встать на ящик после перемещения.
+    const Object::Coordinate nextColumnHeight = m_boxesLocations[column + k].size();
+    const Object::Coordinate currentColumnHeight = m_boxesLocations[column].size();
+    if (row == nextColumnHeight ||
+        (row == currentColumnHeight && row > nextColumnHeight))
+    {
+        return true;
+    }
+
+    // Переход на соседнюю стопку с толканием ящика.
+    // Должен быть запас в две стопки.
+    // Высота соседней стопки должна быть не более чем на 1 больше, чем у текущей.
+    // Высота следующей после соседней стопки должна быть не более, чем у текущей.
+    return
+        column >= 2 &&
+        column <= BOXES_COLUMNS - 3 &&
+        row == nextColumnHeight - 1 &&
+        row >= m_boxesLocations[column + 2 * k].size();
 }
 
 

@@ -65,6 +65,10 @@ private:
         const std::optional<Object::Coordinate> &playerRow,
         const std::optional<Object::Coordinate> &playerColumn,
         const Player::Direction direction) const;
+    bool canPlayerMoveLeftOrRight(
+        Object::Coordinate row,
+        Object::Coordinate column,
+        bool left) const;
     Player::Direction playerNextDirection(
         Player::Direction direction,
         Object::Coordinate row,

@@ -1,7 +1,8 @@
+#include <cstdlib>
+
 #include "game.h"
 #include "log.h"
 #include "version/version.h"
-
 
 // Game example.
 // https://github.com/sschellhoff/SFMLGameDevelopmentByExample/tree/master/chapter_03
@@ -23,7 +24,25 @@
 // Кран может проехать, не скинув ящика
 
 
-int main()
+std::optional<unsigned int> positionNumber(const char *string)
+{
+    std::optional<unsigned int> position;
+    std::size_t pos{};
+    try
+    {
+        position = std::stoi(string, &pos);
+    }
+    catch (const std::exception &ex)
+    {
+        LOG_ERROR(
+            "Unable to cast position with number \"" << string
+            << "\". Error: " << ex.what() << ".");
+    }
+    return position;
+}
+
+
+int main(int argc, char *argv[])
 {
     // Если необходимо записывать лог в файл.
     // Log::instance().setPath(".");
@@ -36,7 +55,8 @@ int main()
         LOG_ERROR("Failed to initialize application. Error: " << result);
         return 1;
     }
-    game.reset(1);
+    const std::optional<unsigned int> position = argc > 1 ? positionNumber(argv[1]) : std::nullopt;
+    game.reset(position);
     while (!game.window().isDone())
     {
 //        game.handleInput();
