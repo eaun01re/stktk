@@ -26,6 +26,17 @@ public:
         DownRight = Down | Right
     };
 
+    enum Animations : AnimationId
+    {
+        Idle,
+        WalkLeft,
+        WalkRight,
+        PushLeft,
+        PushRight,
+        JumpLeft,
+        JumpRight
+    };
+
 public:
     explicit Player() = default;
     virtual ~Player() = default;
@@ -33,12 +44,16 @@ public:
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     void move(Direction direction, bool push = false, Direction nextDirection = Direction::None);
+    void stop();
+    Direction direction() const noexcept;
 
 private:
     void setDirection(Direction direction, bool push);
 
 private:
     std::unique_ptr<Animation> m_animation;
+
+    Direction m_direction{ Direction::None };
     Direction m_nextDirection{ Direction::None };
     bool m_lookLeft{ true };
 };

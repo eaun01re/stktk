@@ -14,6 +14,29 @@ const std::string TEXTURE_BOX("box.png");
 const std::string TEXTURE_PLAYER("player.png");
 const std::string TEXTURE_BACKGROUND("background.png");
 
+
+Player::Direction directionByKey(sf::Keyboard::Key key)
+{
+    switch (key)
+    {
+    case sf::Keyboard::Key::Left:
+    case sf::Keyboard::Key::A:
+        return Player::Direction::Left;
+    case sf::Keyboard::Key::Right:
+    case sf::Keyboard::Key::D:
+        return Player::Direction::Right;
+    case sf::Keyboard::Key::Up:
+    case sf::Keyboard::Key::W:
+        return Player::Direction::Up;
+    case sf::Keyboard::Key::Q:
+        return Player::Direction::UpLeft;
+    case sf::Keyboard::Key::E:
+        return Player::Direction::UpRight;
+    default:
+        return Player::Direction::None;
+    }
+}
+
 }
 
 
@@ -39,7 +62,8 @@ Game::Game()
     : m_window(
         ProjectName,
         std::bind(&Game::windowResized, this, std::placeholders::_1),
-        std::bind(&Game::keyPressed, this, std::placeholders::_1))
+        std::bind(&Game::keyPressed, this, std::placeholders::_1),
+        std::bind(&Game::keyReleased, this, std::placeholders::_1))
 {
     restartClock();
 }
@@ -105,29 +129,23 @@ void Game::windowResized(const sf::Vector2u &size)
 
 void Game::keyPressed(const sf::Event::KeyEvent &key)
 {
-    switch (key.code)
+    const Player::Direction requestedDirection = directionByKey(key.code);
+    if (requestedDirection == Player::Direction::None)
     {
-    case sf::Keyboard::Key::Left:
-    case sf::Keyboard::Key::A:
-        m_world.movePlayer(Player::Direction::Left);
-        break;
-    case sf::Keyboard::Key::Right:
-    case sf::Keyboard::Key::D:
-        m_world.movePlayer(Player::Direction::Right);
-        break;
-    case sf::Keyboard::Key::Up:
-    case sf::Keyboard::Key::W:
-        m_world.movePlayer(Player::Direction::Up);
-        break;
-    case sf::Keyboard::Key::Q:
-        m_world.movePlayer(Player::Direction::UpLeft);
-        break;
-    case sf::Keyboard::Key::E:
-        m_world.movePlayer(Player::Direction::UpRight);
-        break;
-    default:
-        break;
+        return;
     }
+    m_world.requestMovePlayer(requestedDirection);
+}
+
+
+void Game::keyReleased(const sf::Event::KeyEvent &key)
+{
+    const Player::Direction requestedDirection = directionByKey(key.code);
+    if (requestedDirection == Player::Direction::None)
+    {
+        return;
+    }
+    m_world.requestStopPlayer();
 }
 
 

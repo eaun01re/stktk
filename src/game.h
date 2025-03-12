@@ -24,6 +24,7 @@ public:
 private:
     void windowResized(const sf::Vector2u &size);
     void keyPressed(const sf::Event::KeyEvent &key);
+    void keyReleased(const sf::Event::KeyEvent &key);
 
 private:
     Window m_window;

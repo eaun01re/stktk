@@ -29,7 +29,11 @@ struct TextureSpriteIndex
     bool mirrored{ false };
 };
 
+using AnimationId = unsigned int;
+/// Номера спрайтов, составляющих одну определенную анимацию.
 using AnimationSpriteIndices = std::vector<TextureSpriteIndex>;
+/// Список всех возможных анимаций объекта.
+using AnimationMap = std::map<AnimationId, AnimationSpriteIndices>;
 
 
 class Animation final
@@ -38,20 +42,23 @@ public:
     explicit Animation(
         const sf::Texture &texture,
         const sf::Vector2u &spritesQuantity,
+        const AnimationMap &animations,
         const Duration &switchTime);
-    void setSpritesIndices(const AnimationSpriteIndices &indices);
+    void setAnimationId(const AnimationId id);
     void update(const Duration &elapsed);
     unsigned int currentSpriteIndex() const noexcept;
     const sf::IntRect& rect() const noexcept;
 
 private:
+    const AnimationMap &m_animations;
+    /// Длительность отображения одного спрайта анимации.
     const Duration m_switchTime;
 
-    AnimationSpriteIndices m_spritesIndices;
-    sf::Vector2u m_currentSprite;
+    AnimationId m_currentAnimationId{ 0 };
+    AnimationMap::const_iterator m_currentSpritesIndices;
     unsigned int m_currentSpriteIndex{ 0 };
-
-    sf::IntRect m_rect;
+    /// Участок текущего спрайта в текстуре.
+    sf::IntRect m_currentRect;
 
     Duration m_totalTime;
 };

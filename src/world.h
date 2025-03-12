@@ -28,7 +28,7 @@ struct InitialPosition;
 class World final
 {
 public:
-    World();
+    explicit World();
 
     void init(
         sf::Texture textureBackground,
@@ -42,6 +42,8 @@ public:
 
     // void limitPlayer(Player &player);
 
+    void requestMovePlayer(const Player::Direction direction);
+    void requestStopPlayer();
     void movePlayer(const Player::Direction direction);
 
     void render(sf::RenderTarget &target);
@@ -93,22 +95,16 @@ private:
 private:
     sf::Sprite m_background;
     sf::Texture m_textureBackground;
-    sf::Texture m_textureBox;
-
-    sf::Vector2u m_windowSize;
-
-    // Переход в систему координат, у которой начало в левом нижнем углу
-    // игровой области, ось X направлена вправо, ось Y направлена вверх.
-    // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
-    // TODO: Сохранить глобально, чтобы не пересоздавать каждый раз.
     sf::Transform m_transform;
 
+    sf::Texture m_textureBox;
+
     Player m_player;
+    Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
     std::array<std::vector<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::map<Box::Id, Box> m_boxes;
     Box::Id m_lastBoxId{ 0 };
 
     mutable std::mt19937 m_randomEngine;
-    mutable std::uniform_int_distribution<std::mt19937::result_type> m_distribution;
 };

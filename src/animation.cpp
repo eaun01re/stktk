@@ -4,20 +4,34 @@
 Animation::Animation(
     const sf::Texture &texture,
     const sf::Vector2u &spritesQuantity,
+    const AnimationMap &animations,
     const Duration &switchTime)
-    : m_switchTime(switchTime)
+    : m_animations(animations)
+    , m_switchTime(switchTime)
 {
-    m_rect.width = texture.getSize().x / float(spritesQuantity.y);
-    m_rect.height = texture.getSize().y / float(spritesQuantity.x);
+    m_currentRect.width = texture.getSize().x / float(spritesQuantity.y);
+    m_currentRect.height = texture.getSize().y / float(spritesQuantity.x);
+    m_currentSpritesIndices = m_animations.cbegin();
 }
 
 
-void Animation::setSpritesIndices(const AnimationSpriteIndices &indices)
+void Animation::setAnimationId(const AnimationId id)
 {
-    m_spritesIndices = indices;
+    if (m_currentAnimationId == id)
+    {
+        return;
+    }
 
+    const auto it = m_animations.find(id);
+    if (it == m_animations.cend())
+    {
+        return;
+    }
+
+    m_currentSpritesIndices = it;
+    m_currentAnimationId = id;
+    m_currentSpriteIndex = 0;
     // Принудительное обновление анимации после смены спрайтов.
-    // FIXME: Устранить подёргивание при назначении анимации.
     m_totalTime = m_switchTime;
 }
 
@@ -30,35 +44,35 @@ unsigned int Animation::currentSpriteIndex() const noexcept
 
 const sf::IntRect& Animation::rect() const noexcept
 {
-    return m_rect;
+    return m_currentRect;
 }
 
 
 void Animation::update(const Duration &elapsed)
 {
     m_totalTime += elapsed;
-
     if (m_totalTime < m_switchTime)
     {
         return;
     }
-
     m_totalTime -= m_switchTime;
+
     ++m_currentSpriteIndex;
-    if (m_currentSpriteIndex >= m_spritesIndices.size())
+    const AnimationSpriteIndices &spritesIndices = m_currentSpritesIndices->second;
+    if (m_currentSpriteIndex >= spritesIndices.size())
     {
         m_currentSpriteIndex = 0;
     }
 
-    m_rect.top = m_spritesIndices[m_currentSpriteIndex].row * m_rect.height;
-    if (m_spritesIndices[m_currentSpriteIndex].mirrored)
+    m_currentRect.top = spritesIndices[m_currentSpriteIndex].row * m_currentRect.height;
+    if (spritesIndices[m_currentSpriteIndex].mirrored)
     {
-        m_rect.left = (m_spritesIndices[m_currentSpriteIndex].column + 1) * std::abs(m_rect.width);
-        m_rect.width = -std::abs(m_rect.width);
+        m_currentRect.left = (spritesIndices[m_currentSpriteIndex].column + 1) * std::abs(m_currentRect.width);
+        m_currentRect.width = -std::abs(m_currentRect.width);
     }
     else
     {
-        m_rect.width = std::abs(m_rect.width);
-        m_rect.left = m_spritesIndices[m_currentSpriteIndex].column * m_rect.width;
+        m_currentRect.width = std::abs(m_currentRect.width);
+        m_currentRect.left = spritesIndices[m_currentSpriteIndex].column * m_currentRect.width;
     }
 }

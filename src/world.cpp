@@ -69,6 +69,18 @@ void World::update(const Duration &elapsed)
 }
 
 
+void World::requestMovePlayer(const Player::Direction direction)
+{
+    m_playerRequestedDirection = direction;
+}
+
+
+void World::requestStopPlayer()
+{
+    m_playerRequestedDirection = Player::Direction::None;
+}
+
+
 void World::movePlayer(const Player::Direction direction)
 {
     const std::optional<Object::Coordinate> playerRow = m_player.row();
@@ -128,7 +140,6 @@ void World::setup()
 {
     std::random_device device;
     m_randomEngine = std::mt19937(device());
-    m_distribution = std::uniform_int_distribution<std::mt19937::result_type>(0, BOXES_COLUMNS - 1);
 
     // Переход в систему координат, у которой начало в левом нижнем углу
     // игровой области, ось X направлена вправо, ось Y направлена вверх.
@@ -263,7 +274,8 @@ bool World::canPlayerMove(
     case Player::Direction::UpLeft:
         return
             playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            column > 1 && row == m_boxesLocations[column].size() &&
+            column > 1 &&
+            row == m_boxesLocations[column].size() &&
             row >= m_boxesLocations[column - 1].size() &&
             row + 1 >= m_boxesLocations[column - 2].size();
     case Player::Direction::UpRight:
@@ -292,7 +304,7 @@ bool World::canPlayerMoveLeftOrRight(
 {
     const int k = left ? -1 : 1;
 
-    if (column <= 0 || column >= BOXES_COLUMNS - 1)
+    if ((left && column <= 0) || (!left && column >= BOXES_COLUMNS - 1))
     {
         return false;
     }
@@ -312,8 +324,8 @@ bool World::canPlayerMoveLeftOrRight(
     // Высота соседней стопки должна быть не более чем на 1 больше, чем у текущей.
     // Высота следующей после соседней стопки должна быть не более, чем у текущей.
     return
-        column >= 2 &&
-        column <= BOXES_COLUMNS - 3 &&
+        ((left && column >= 2) ||
+        (!left && column <= BOXES_COLUMNS - 3)) &&
         row == nextColumnHeight - 1 &&
         row >= m_boxesLocations[column + 2 * k].size();
 }
@@ -348,10 +360,21 @@ Player::Direction World::playerNextDirection(
 void World::updatePlayer(const Duration &elapsed)
 {
     m_player.update(elapsed);
+
+    if (m_playerRequestedDirection != Player::Direction::None)
+    {
+        movePlayer(m_playerRequestedDirection);
+    }
+
     const std::optional<Object::Coordinate> playerColumn = m_player.column();
     if (!playerColumn.has_value() || m_player.isMoving())
     {
         return;
+    }
+
+    if (m_playerRequestedDirection == Player::Direction::None)
+    {
+        m_player.stop();
     }
 
     const float playerHeight = m_player.position().y;

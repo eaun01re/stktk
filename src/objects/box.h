@@ -27,14 +27,14 @@ public:
 
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
-    Id id() const;
+    Id id() const noexcept;
     unsigned int style() const noexcept;
     void setStyle(unsigned int style);
     void move(Direction direction);
     Direction direction() const noexcept;
 
 private:
-    Id m_id{ 0 };
+    const Id m_id;
     unsigned int m_style{ 0 };
     Direction m_direction{ Direction::None };
 };

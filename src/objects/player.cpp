@@ -14,43 +14,73 @@ namespace
 const Duration ANIMATION_INTERVAL = std::chrono::milliseconds(300);
 
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
-const sf::Vector2u ANIMATION_SPRITES(3, 4);
+const sf::Vector2u TEXTURE_SIZE(3, 4);
 
-const AnimationSpriteIndices ANIMATION_IDLE
+const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
 {
-    { 0, 0, false },
-    { 0, 1, false },
-    { 0, 2, false },
-    { 0, 0, false },
-    { 0, 1, false },
-    { 0, 2, true }
+    {
+        Player::Animations::Idle,
+        AnimationSpriteIndices
+        {
+            { 0, 0, false },
+            { 0, 1, false },
+            { 0, 2, false },
+            { 0, 0, false },
+            { 0, 1, false },
+            { 0, 2, true }
+        }
+    },
+    {
+        Player::Animations::WalkLeft,
+        AnimationSpriteIndices
+        {
+            { 1, 0, false },
+            { 1, 1, false },
+            { 1, 2, false }
+        }
+    },
+    {
+        Player::Animations::WalkRight,
+        AnimationSpriteIndices
+        {
+            { 1, 0, true },
+            { 1, 1, true },
+            { 1, 2, true }
+        }
+    },
+    {
+        Player::Animations::PushLeft,
+        AnimationSpriteIndices
+        {
+            { 2, 0, false },
+            { 2, 1, false },
+            { 2, 2, false }
+        }
+    },
+    {
+        Player::Animations::PushRight,
+        AnimationSpriteIndices
+        {
+            { 2, 0, true },
+            { 2, 1, true },
+            { 2, 2, true }
+        }
+    },
+    {
+        Player::Animations::JumpLeft,
+        AnimationSpriteIndices
+        {
+            { 0, 3, false }
+        }
+    },
+    {
+        Player::Animations::JumpRight,
+        AnimationSpriteIndices
+        {
+            { 0, 3, true }
+        }
+    },
 };
-const AnimationSpriteIndices ANIMATION_WALK_LEFT
-{
-    { 1, 0, false },
-    { 1, 1, false },
-    { 1, 2, false }
-};
-const AnimationSpriteIndices ANIMATION_WALK_RIGHT
-{
-    { 1, 0, true },
-    { 1, 1, true },
-    { 1, 2, true }
-};
-const AnimationSpriteIndices ANIMATION_PUSH_LEFT
-{
-    { 2, 0, false },
-    { 2, 1, false },
-    { 2, 2, false }
-};
-const AnimationSpriteIndices ANIMATION_PUSH_RIGHT
-{
-    { 2, 0, true },
-    { 2, 1, true },
-    { 2, 2, true }
-};
-const AnimationSpriteIndices ANIMATION_JUMP_LEFT{ { 0, 3, false } };
-const AnimationSpriteIndices ANIMATION_JUMP_RIGHT{ { 0, 3, true } };
 
 }
 
@@ -61,9 +91,10 @@ void Player::init(const sf::Texture &texture)
 
     m_animation.reset(new Animation(
         m_texture,
-        ANIMATION_SPRITES,
+        TEXTURE_SIZE,
+        ANIMATIONS,
         ANIMATION_INTERVAL));
-    m_animation->setSpritesIndices(ANIMATION_IDLE);
+    m_animation->setAnimationId(Animations::Idle);
 }
 
 
@@ -73,7 +104,7 @@ void Player::update(const Duration &elapsed)
     m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
     if (!isMoving())
     {
-        m_lookLeft = m_animation->currentSpriteIndex() < ANIMATION_IDLE.size() / 2;
+        m_lookLeft = m_animation->currentSpriteIndex() < ANIMATIONS.at(Animations::Idle).size() / 2;
     }
 
     if (!isTolerant(m_speed))
@@ -109,11 +140,23 @@ void Player::move(Direction direction, bool push, Direction nextDirection)
 }
 
 
+void Player::stop()
+{
+    m_animation->setAnimationId(Animations::Idle);
+}
+
+
+Player::Direction Player::direction() const noexcept
+{
+    return m_direction;
+}
+
+
 void Player::setDirection(Direction direction, bool push)
 {
     m_speed = sf::Vector2f();
     m_movementLength = sf::Vector2f();
-    m_animation->setSpritesIndices(ANIMATION_IDLE);
+    m_direction = direction;
 
     if ((direction & Direction::Left && direction & Direction::Right) ||
         (direction & Direction::Up && direction & Direction::Down))
@@ -129,6 +172,7 @@ void Player::setDirection(Direction direction, bool push)
         return;
     }
 
+    // Обновление направления взгляда.
     if (direction & Direction::Left || direction & Direction::Right)
     {
         m_lookLeft = direction & Direction::Left;
@@ -141,50 +185,50 @@ void Player::setDirection(Direction direction, bool push)
     case Direction::Left:
         m_speed = sf::Vector2f(-SPEED, 0);
         m_movementLength = sf::Vector2f(-BOX_SIZE, 0);
-        m_animation->setSpritesIndices(push
-           ? ANIMATION_PUSH_LEFT
-           : ANIMATION_WALK_LEFT);
+        m_animation->setAnimationId(push
+            ? Animations::PushLeft
+            : Animations::WalkLeft);
         break;
     case Direction::Right:
         m_speed = sf::Vector2f(SPEED, 0);
         m_movementLength = sf::Vector2f(BOX_SIZE, 0);
-        m_animation->setSpritesIndices(push
-            ? ANIMATION_PUSH_RIGHT
-            : ANIMATION_WALK_RIGHT);
+        m_animation->setAnimationId(push
+            ? Animations::PushRight
+            : Animations::WalkRight);
         break;
     case Direction::Up:
         m_speed = sf::Vector2f(0, SPEED);
         m_movementLength = sf::Vector2f(0, BOX_SIZE);
-        m_animation->setSpritesIndices(m_lookLeft
-            ? ANIMATION_JUMP_LEFT
-            : ANIMATION_JUMP_RIGHT);
+        m_animation->setAnimationId(m_lookLeft
+            ? Animations::JumpLeft
+            : Animations::JumpRight);
         break;
     case Direction::Down:
         m_speed = sf::Vector2f(0, -SPEED);
         m_movementLength = sf::Vector2f(0, -BOX_SIZE);
-        m_animation->setSpritesIndices(m_lookLeft
-            ? ANIMATION_JUMP_LEFT
-            : ANIMATION_JUMP_RIGHT);
+        m_animation->setAnimationId(m_lookLeft
+            ? Animations::JumpLeft
+            : Animations::JumpRight);
         break;
     case Direction::UpLeft:
         m_speed = sf::Vector2f(-SPEED, SPEED);
         m_movementLength = sf::Vector2f(-BOX_SIZE, BOX_SIZE);
-        m_animation->setSpritesIndices(ANIMATION_JUMP_LEFT);
+        m_animation->setAnimationId(Animations::JumpLeft);
         break;
     case Direction::UpRight:
         m_speed = sf::Vector2f(SPEED, SPEED);
         m_movementLength = sf::Vector2f(BOX_SIZE, BOX_SIZE);
-        m_animation->setSpritesIndices(ANIMATION_JUMP_RIGHT);
+        m_animation->setAnimationId(Animations::JumpRight);
         break;
     case Direction::DownLeft:
         m_speed = sf::Vector2f(-SPEED, -SPEED);
         m_movementLength = sf::Vector2f(-BOX_SIZE, -BOX_SIZE);
-        m_animation->setSpritesIndices(ANIMATION_JUMP_LEFT);
+        m_animation->setAnimationId(Animations::JumpLeft);
         break;
     case Direction::DownRight:
         m_speed = sf::Vector2f(SPEED, -SPEED);
         m_movementLength = sf::Vector2f(BOX_SIZE, -BOX_SIZE);
-        m_animation->setSpritesIndices(ANIMATION_JUMP_RIGHT);
+        m_animation->setAnimationId(Animations::JumpRight);
         break;
     }
 }

@@ -19,13 +19,14 @@ class Window final
 {
 public:
     using ResizeCallback = std::function<void(const sf::Vector2u&)>;
-    using KeyPressCallback = std::function<void(const sf::Event::KeyEvent&)>;
+    using KeyCallback = std::function<void(const sf::Event::KeyEvent&)>;
 
 public:
     explicit Window(
         const std::string &title,
         ResizeCallback resizeCallback,
-        KeyPressCallback keyPressCallback);
+        KeyCallback keyPressCallback,
+        KeyCallback keyReleaseCallback);
     ~Window();
 
     void beginDraw();
@@ -33,7 +34,7 @@ public:
 
     void update();
 
-    bool isDone() const;
+    bool isDone() const noexcept;
     bool isFullscreen();
     sf::RenderWindow& renderWindow() noexcept;
 
@@ -57,7 +58,8 @@ private:
     sf::Vector2u m_windowSize;
     std::string m_windowTitle;
     ResizeCallback m_resizeCallback;
-    KeyPressCallback m_keyPressCallback;
+    KeyCallback m_keyPressCallback;
+    KeyCallback m_keyReleaseCallback;
     bool m_isDone{ false };
     bool m_isFullscreen{ false };
 };

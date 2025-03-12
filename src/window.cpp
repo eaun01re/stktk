@@ -17,9 +17,11 @@ constexpr int SCREEN_SIZE_MULTIPLIER = 8;
 Window::Window(
     const std::string &title,
     ResizeCallback resizeCallback,
-    KeyPressCallback keyPressCallback)
+    KeyCallback keyPressCallback,
+    KeyCallback keyReleaseCallback)
     : m_resizeCallback(resizeCallback)
     , m_keyPressCallback(keyPressCallback)
+    , m_keyReleaseCallback(keyReleaseCallback)
 {
     setup(title);
 }
@@ -75,7 +77,7 @@ void Window::endDraw()
 }
 
 
-bool Window::isDone() const
+bool Window::isDone() const noexcept
 {
     return m_isDone;
 }
@@ -162,6 +164,12 @@ void Window::update()
 //            {
 //                toggleFullscreen();
 //            }
+            break;
+        case sf::Event::KeyReleased:
+            if (m_keyReleaseCallback)
+            {
+                m_keyReleaseCallback(event.key);
+            }
             break;
         default:
             break;

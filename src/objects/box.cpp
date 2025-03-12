@@ -27,7 +27,7 @@ void Box::init(const sf::Texture &texture)
 }
 
 
-Box::Id Box::id() const
+Box::Id Box::id() const noexcept
 {
     return m_id;
 }
