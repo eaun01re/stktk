@@ -32,7 +32,7 @@ void Animation::setAnimationId(const AnimationId id)
     m_currentAnimationId = id;
     m_currentSpriteIndex = 0;
     // Принудительное обновление анимации после смены спрайтов.
-    m_totalTime = m_switchTime;
+    m_dirty = true;
 }
 
 
@@ -48,31 +48,48 @@ const sf::IntRect& Animation::rect() const noexcept
 }
 
 
-void Animation::update(const Duration &elapsed)
+bool Animation::update(const Duration &elapsed)
 {
-    m_totalTime += elapsed;
-    if (m_totalTime < m_switchTime)
-    {
-        return;
-    }
-    m_totalTime -= m_switchTime;
+    const TextureSpriteIndices &spritesIndices = m_currentSpritesIndices->second;
 
-    ++m_currentSpriteIndex;
-    const AnimationSpriteIndices &spritesIndices = m_currentSpritesIndices->second;
+    if (!m_dirty)
+    {
+        if (spritesIndices.size() == 1)
+        {
+            return false;
+        }
+
+        m_totalTime += elapsed;
+        if (m_totalTime < m_switchTime)
+        {
+            return false;
+        }
+        m_totalTime -= m_switchTime;
+
+        ++m_currentSpriteIndex;
+    }
+    m_dirty = false;
+
     if (m_currentSpriteIndex >= spritesIndices.size())
     {
         m_currentSpriteIndex = 0;
     }
+    setSpriteIndex(spritesIndices[m_currentSpriteIndex]);
+    return true;
+}
 
-    m_currentRect.top = spritesIndices[m_currentSpriteIndex].row * m_currentRect.height;
-    if (spritesIndices[m_currentSpriteIndex].mirrored)
+
+void Animation::setSpriteIndex(const TextureSpriteIndex &index)
+{
+    m_currentRect.top = index.row * m_currentRect.height;
+    if (index.mirrored)
     {
-        m_currentRect.left = (spritesIndices[m_currentSpriteIndex].column + 1) * std::abs(m_currentRect.width);
+        m_currentRect.left = (index.column + 1) * std::abs(m_currentRect.width);
         m_currentRect.width = -std::abs(m_currentRect.width);
     }
     else
     {
         m_currentRect.width = std::abs(m_currentRect.width);
-        m_currentRect.left = spritesIndices[m_currentSpriteIndex].column * m_currentRect.width;
+        m_currentRect.left = index.column * m_currentRect.width;
     }
 }

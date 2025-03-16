@@ -2,6 +2,7 @@
 
 
 #include <array>
+#include <list>
 #include <optional>
 #include <random>
 
@@ -29,23 +30,15 @@ class World final
 {
 public:
     explicit World();
-
     void init(
         sf::Texture textureBackground,
         sf::Texture texturePlayer,
         sf::Texture textureBox);
     void generateStartPosition(const std::optional<unsigned int> &position = std::nullopt);
-
     void update(const Duration &elapsed);
-
-//    sf::Vector2f generatePlayerStartPosition();
-
-    // void limitPlayer(Player &player);
-
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
     void movePlayer(const Player::Direction direction);
-
     void render(sf::RenderTarget &target);
 
 private:
@@ -61,8 +54,8 @@ private:
      */
     void generateRandomPosition();
     void generatePredefinedPosition(const InitialPosition &initialPosition);
-    void addBox(unsigned int style, unsigned char row, unsigned char column);
-    void setPlayerColumn(unsigned char column);
+    void addBox(Object::Coordinate row, Object::Coordinate column);
+    void setPlayerColumn(Object::Coordinate column);
     bool canPlayerMove(
         const std::optional<Object::Coordinate> &playerRow,
         const std::optional<Object::Coordinate> &playerColumn,
@@ -81,16 +74,15 @@ private:
         Object::Coordinate row,
         Object::Coordinate column,
         Box::Direction direction);
-    void changeBoxColumn(
-        Box::Id id,
-        Object::Coordinate columnOld,
-        Object::Coordinate columnNew);
-    Box& box(Object::Coordinate row, Object::Coordinate column);
-    Object::Coordinate boxesInBottomRow() const;
-
-private:
-    /// Количество вариантов текстуры ящика. Зависит от содержимого ресурсного файла.
-    static unsigned int m_boxTextureVariants;
+    void checkBottomRow();
+    bool bottomRowFilled() const;
+    void removeBlowedBoxes();
+    /*!
+     * Возвращает высоту стопки, сложенной из неподвижных ящиков.
+     * \param[in] column Номер столбца.
+     * \return Количество неподвижных ящиков.
+     */
+    Object::Coordinate columnHeight(Object::Coordinate column) const noexcept;
 
 private:
     sf::Sprite m_background;
@@ -102,7 +94,7 @@ private:
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
-    std::array<std::vector<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
+    std::array<std::list<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::map<Box::Id, Box> m_boxes;
     Box::Id m_lastBoxId{ 0 };
 

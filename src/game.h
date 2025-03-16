@@ -34,7 +34,7 @@ private:
 #if defined(USE_SFML_CLOCK)
     sf::Clock m_clock;
 #elif defined(USE_STD_CLOCK)
-    std::chrono::high_resolution_clock::time_point m_time;
+    TimePoint m_time;
 #endif
     Duration m_elapsed;
 

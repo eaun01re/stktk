@@ -37,7 +37,7 @@ set_property(
     )
 if(RENDER_TIMER STREQUAL "SFML")
     add_definitions(-DUSE_SFML_CLOCK)
-elseif(ENABLE_SOMETHING STREQUAL "STD")
+elseif(RENDER_TIMER STREQUAL "STD")
     add_definitions(-DUSE_STD_CLOCK)
 else()
     add_definitions(-DUSE_FIXED_CLOCK)

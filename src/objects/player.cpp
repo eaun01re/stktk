@@ -16,11 +16,11 @@ const Duration ANIMATION_INTERVAL = std::chrono::milliseconds(300);
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
 const sf::Vector2u TEXTURE_SIZE(3, 4);
 
-const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
+const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
 {
     {
         Player::Animations::Idle,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 0, 0, false },
             { 0, 1, false },
@@ -32,7 +32,7 @@ const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
     },
     {
         Player::Animations::WalkLeft,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 1, 0, false },
             { 1, 1, false },
@@ -41,7 +41,7 @@ const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
     },
     {
         Player::Animations::WalkRight,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 1, 0, true },
             { 1, 1, true },
@@ -50,7 +50,7 @@ const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
     },
     {
         Player::Animations::PushLeft,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 2, 0, false },
             { 2, 1, false },
@@ -59,7 +59,7 @@ const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
     },
     {
         Player::Animations::PushRight,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 2, 0, true },
             { 2, 1, true },
@@ -68,14 +68,14 @@ const std::map<AnimationId, AnimationSpriteIndices> ANIMATIONS
     },
     {
         Player::Animations::JumpLeft,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 0, 3, false }
         }
     },
     {
         Player::Animations::JumpRight,
-        AnimationSpriteIndices
+        TextureSpriteIndices
         {
             { 0, 3, true }
         }
@@ -95,13 +95,17 @@ void Player::init(const sf::Texture &texture)
         ANIMATIONS,
         ANIMATION_INTERVAL));
     m_animation->setAnimationId(Animations::Idle);
+    m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
 }
 
 
 void Player::update(const Duration &elapsed)
 {
-    m_animation->update(elapsed);
-    m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
+    if (m_animation->update(elapsed))
+    {
+        m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
+    }
+
     if (!isMoving())
     {
         m_lookLeft = m_animation->currentSpriteIndex() < ANIMATIONS.at(Animations::Idle).size() / 2;

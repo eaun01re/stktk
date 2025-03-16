@@ -37,9 +37,6 @@ Player::Direction directionByKey(sf::Keyboard::Key key)
     }
 }
 
-}
-
-
 bool loadTexture(
     const std::string &file,
     sf::Texture &texture,
@@ -55,6 +52,8 @@ bool loadTexture(
         return result;
     }
     return result;
+}
+
 }
 
 
@@ -105,10 +104,10 @@ void Game::restartClock()
     // Фиксированный интервал, для отладки.
     m_elapsed = fromMicroseconds(1e6 / FPS_LIMIT);
 #elif defined(USE_STD_CLOCK)
-    const std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+    const TimePoint now = Clock::now();
     m_elapsed = std::chrono::duration_cast<Duration>(now - m_time);
-    m_time = std::chrono::high_resolution_clock::now();
-#else
+    m_time = Clock::now();
+#elif defined(USE_FIXED_CLOCK)
     m_elapsed = fromMicroseconds(1e6 / FPS_LIMIT);
 #endif
 }

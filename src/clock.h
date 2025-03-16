@@ -4,7 +4,8 @@
 #include <chrono>
 
 
+using Clock = std::chrono::steady_clock;
 using Duration = std::chrono::duration<double>;
+using TimePoint = Clock::time_point;
 
-double toSeconds(const Duration &time);
 Duration fromMicroseconds(signed long long microseconds);

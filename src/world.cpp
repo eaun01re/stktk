@@ -17,9 +17,6 @@ constexpr int ROWS_WITH_ALLOWED_JUMP = 3;
 }
 
 
-unsigned int World::m_boxTextureVariants = 1;
-
-
 World::World()
 {
     setup();
@@ -37,7 +34,6 @@ void World::init(
     m_player.init(std::move(texturePlayer));
 
     m_textureBox = std::move(textureBox);
-    m_boxTextureVariants = m_textureBox.getSize().x / BOX_SIZE;
 }
 
 
@@ -66,6 +62,10 @@ void World::update(const Duration &elapsed)
         Box &box = boxInfo.second;
         updateBox(box, elapsed);
     }
+
+    checkBottomRow();
+
+    removeBlowedBoxes();
 }
 
 
@@ -146,11 +146,6 @@ void World::setup()
     // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
     m_transform.translate(BOTTOM_LEFT_CORNER);
     m_transform.scale(sf::Vector2f(1, -1));
-
-    for (auto &column : m_boxesLocations)
-    {
-        column.reserve(BOXES_ROWS);
-    }
 }
 
 
@@ -167,9 +162,7 @@ void World::generateRandomPosition()
 {
     constexpr Object::Coordinate MAX_BOXES_IN_COLUMN = 2;
 
-    std::uniform_int_distribution<std::mt19937::result_type> distributionBoxStyle(
-        0,
-        m_boxTextureVariants - 1);
+
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
         BOXES_COLUMNS - 1);
@@ -193,7 +186,7 @@ void World::generateRandomPosition()
         columnsUsed.insert(column);
 
         const Object::Coordinate row = m_boxesLocations[column].size();
-        addBox(distributionBoxStyle(m_randomEngine), row, column);
+        addBox(row, column);
     }
 
     // Определение колонки игрока.
@@ -210,15 +203,11 @@ void World::generateRandomPosition()
 
 void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 {
-    std::uniform_int_distribution<std::mt19937::result_type> distributionBoxStyle(
-        0,
-        m_boxTextureVariants - 1);
-
     for (Object::Coordinate column = 0; column < initialPosition.boxes.size(); ++column)
     {
-        for (unsigned char row = 0; row < initialPosition.boxes[column]; ++row)
+        for (Object::Coordinate row = 0; row < initialPosition.boxes[column]; ++row)
         {
-            addBox(distributionBoxStyle(m_randomEngine), row, column);
+            addBox(row, column);
         }
     }
 
@@ -226,11 +215,10 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 }
 
 
-void World::addBox(unsigned int style, unsigned char row, unsigned char column)
+void World::addBox(Object::Coordinate row, Object::Coordinate column)
 {
     Box box(m_lastBoxId);
     box.init(m_textureBox);
-    box.setStyle(style);
     box.setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
 
     m_boxes.emplace(m_lastBoxId, box);
@@ -241,7 +229,7 @@ void World::addBox(unsigned int style, unsigned char row, unsigned char column)
 }
 
 
-void World::setPlayerColumn(unsigned char column)
+void World::setPlayerColumn(Object::Coordinate column)
 {
     const Object::Coordinate row = m_boxesLocations[column].size();
     const sf::Vector2f playerPosition(column * BOX_SIZE, row * BOX_SIZE);
@@ -402,67 +390,105 @@ void World::updateBox(Box &box, const Duration &elapsed)
 
     const Object::Coordinate column = boxColumn.value();
     const float boxHeight = box.position().y;
-    const float columnHeight = float(m_boxesLocations[column].size()) * BOX_SIZE;
+    const float columnHeight = this->columnHeight(column) * BOX_SIZE;
     if (boxHeight > columnHeight)
     {
         // Под ящиком есть пустота => ящик падает.
-        box.move(Box::Direction::Down);
+        if (!box.isFalling())
+        {
+            box.move(Box::Direction::Down);
+        }
         return;
     }
 
     // Ящик стоит на стопке.
-    // Переиндексация положения ящика после его остановки.
+    // Не сброшенное направление - признак того, что движение только завершилось.
     if (box.direction() != Box::Direction::None)
     {
         box.stopFalling();
-        m_boxesLocations[column].push_back(box.id());
         box.move(Box::Direction::None);
+
+        // Если ящик был перемещен из одной колонки в другую,
+        // то необходимо обновление индексации.
+        auto &boxesInColumn = m_boxesLocations[column];
+        if (std::find(boxesInColumn.cbegin(), boxesInColumn.cend(), box.id()) == boxesInColumn.cend())
+        {
+            m_boxesLocations[column].push_back(box.id());
+        }
     }
 }
 
 
 void World::startMoveBox(
-    Object::Coordinate row,
+    Object::Coordinate,
     Object::Coordinate column,
     Box::Direction direction)
 {
-    Box &box = this->box(row, column);
+    const Box::Id boxId = m_boxesLocations[column].back();
+    Box &box = m_boxes[boxId];
     box.move(direction);
-    m_boxesLocations[column].erase(--m_boxesLocations[column].end());
+    m_boxesLocations[column].pop_back();
 }
 
 
-void World::changeBoxColumn(
-    Box::Id id,
-    Object::Coordinate columnOld,
-    Object::Coordinate columnNew)
+void World::checkBottomRow()
 {
-    if (m_boxesLocations[columnOld].empty())
+    if (!bottomRowFilled())
     {
         return;
     }
-    if (m_boxesLocations[columnOld].back() != id)
+    for (Object::Coordinate column = 0; column < m_boxesLocations.size(); ++column)
     {
-        return;
+        const Box::Id bottomBoxId = m_boxesLocations[column].front();
+        m_boxes[bottomBoxId].blow();
     }
-    m_boxesLocations[columnOld].erase(--m_boxesLocations[columnOld].end());
-    m_boxesLocations[columnNew].push_back(id);
 }
 
 
-Box& World::box(Object::Coordinate row, Object::Coordinate column)
+bool World::bottomRowFilled() const
 {
-    const Box::Id boxId = m_boxesLocations[column][row];
-    return m_boxes[boxId];
-}
-
-
-Object::Coordinate World::boxesInBottomRow() const
-{
-    Object::Coordinate result = 0;
     for (const auto &column : m_boxesLocations)
     {
-        result += column.size();
+        if (column.empty())
+        {
+            return false;
+        }
     }
-    return result;
+    return true;
+}
+
+
+void World::removeBlowedBoxes()
+{
+    for (auto &column : m_boxesLocations)
+    {
+        if (column.empty())
+        {
+            continue;
+        }
+        const Box::Id bottomBoxId = column.front();
+        if (!m_boxes[bottomBoxId].isBlowed())
+        {
+            continue;
+        }
+        m_boxes.erase(bottomBoxId);
+        column.pop_front();
+    }
+}
+
+
+Object::Coordinate World::columnHeight(Object::Coordinate column) const noexcept
+{
+    Object::Coordinate row = 0;
+    for (const Box::Id &boxId : m_boxesLocations[column])
+    {
+        const Box &box = m_boxes.at(boxId);
+        const std::optional<Object::Coordinate> boxRow = box.row();
+        if (box.isFalling() || !boxRow.has_value() || boxRow.value() != row)
+        {
+            break;
+        }
+        ++row;
+    }
+    return row;
 }

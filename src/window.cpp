@@ -1,14 +1,17 @@
 #include "window.h"
 
+#include "consts.h"
+
 
 namespace
 {
 
-const sf::Color BACKGROUND_COLOR(217, 150, 32);
 /// Размер игрового мира. Соответствует размеру экрана телефона.
-// https://mobilespecs.net/phone/Siemens/Siemens_A52.html
+/// https://mobilespecs.net/phone/Siemens/Siemens_A52.html
 const sf::Vector2u SCREEN_SIZE(101, 64);
+
 const float ASPECT_RATIO = float(SCREEN_SIZE.x) / SCREEN_SIZE.y;
+
 constexpr int SCREEN_SIZE_MULTIPLIER = 8;
 
 }

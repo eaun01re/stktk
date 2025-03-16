@@ -1,8 +1,11 @@
 #pragma once
 
 
+#include <memory>
+
 #include <SFML/Graphics.hpp>
 
+#include "animation.h"
 #include "objects/object.h"
 
 
@@ -20,6 +23,19 @@ public:
         Down
     };
 
+    enum Animations : AnimationId
+    {
+        Rest0,
+        Rest1,
+        Rest2,
+        Rest3,
+        Rest4,
+        Rest5,
+        Rest6,
+        Rest7,
+        Blow,
+    };
+
 public:
     explicit Box(Id id = 0);
     Box(const Box &box);
@@ -28,13 +44,20 @@ public:
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     Id id() const noexcept;
-    unsigned int style() const noexcept;
-    void setStyle(unsigned int style);
+    Animations style() const noexcept;
     void move(Direction direction);
     Direction direction() const noexcept;
+    void blow();
+    bool isBlowed() const;
+
+private:
+    void setStyle(Animations style);
 
 private:
     const Id m_id;
-    unsigned int m_style{ 0 };
+    Animations m_style{ Animations::Rest0 };
     Direction m_direction{ Direction::None };
+
+    std::optional<TimePoint> m_blowStart;
+    std::unique_ptr<Animation> m_animation;
 };
