@@ -209,7 +209,7 @@ void Player::setDirection(Direction direction, bool push)
         break;
     case Direction::Down:
         m_speed = sf::Vector2f(0, -SPEED);
-        m_movementLength = sf::Vector2f(0, -BOX_SIZE);
+        m_movementLength = sf::Vector2f(0, -std::numeric_limits<float>::infinity());
         m_animation->setAnimationId(m_lookLeft
             ? Animations::JumpLeft
             : Animations::JumpRight);

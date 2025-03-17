@@ -325,11 +325,7 @@ Player::Direction World::playerNextDirection(
     Object::Coordinate column) const
 {
     Player::Direction result = Player::Direction::None;
-    if (direction == Player::Direction::Up)
-    {
-        result = Player::Direction::Down;
-    }
-    else if (direction == Player::Direction::UpLeft)
+    if (direction == Player::Direction::UpLeft)
     {
         result = row + 1 == m_boxesLocations[column - 2].size()
             ? Player::Direction::Left
@@ -349,31 +345,38 @@ void World::updatePlayer(const Duration &elapsed)
 {
     m_player.update(elapsed);
 
-    if (m_playerRequestedDirection != Player::Direction::None)
+    if (m_playerRequestedDirection != Player::Direction::None
+        && (m_player.direction() == Player::Direction::None || m_player.isFalling()))
     {
         movePlayer(m_playerRequestedDirection);
     }
 
     const std::optional<Object::Coordinate> playerColumn = m_player.column();
-    if (!playerColumn.has_value() || m_player.isMoving())
+    if (!playerColumn.has_value())
     {
         return;
     }
 
-    if (m_playerRequestedDirection == Player::Direction::None)
+    if (m_playerRequestedDirection == Player::Direction::None && !m_player.isMoving())
     {
         m_player.stop();
     }
 
     const float playerHeight = m_player.position().y;
     const float columnHeight = float(m_boxesLocations[playerColumn.value()].size()) * BOX_SIZE;
-    if (playerHeight < columnHeight)
+    if (playerHeight > columnHeight)
+    {
+        if (!m_player.isMoving())
+        {
+            m_player.move(Player::Direction::Down);
+        }
+        return;
+    }
+
+    if (m_player.direction() == Player::Direction::Down)
     {
         m_player.stopFalling();
-    }
-    if (playerHeight > columnHeight && !m_player.isMoving())
-    {
-        m_player.move(Player::Direction::Down);
+        m_player.move(Player::Direction::None);
     }
 }
 

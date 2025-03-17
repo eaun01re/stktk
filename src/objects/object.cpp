@@ -46,7 +46,7 @@ const sf::Vector2f& Object::speed() const noexcept
 
 bool Object::isFalling() const noexcept
 {
-    return m_speed.y < 0;
+    return m_speed.x == 0 && m_speed.y < 0;
 }
 
 
