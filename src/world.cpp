@@ -5,6 +5,7 @@
 
 #include "initial_position.h"
 #include "log.h"
+#include "resource_loader.h"
 
 
 namespace
@@ -13,6 +14,8 @@ namespace
 constexpr int INITIAL_BOX_QUANTITY = 12;
 /// Количество нижних рядов, на которых разрешено прыгать.
 constexpr int ROWS_WITH_ALLOWED_JUMP = 3;
+/// Максимальное количество кранов в начале игры.
+constexpr std::uint8_t MAX_INITIAL_CRANES_QUANTITY = 3;
 
 }
 
@@ -23,33 +26,43 @@ World::World()
 }
 
 
-void World::init(
-    sf::Texture textureBackground,
-    sf::Texture texturePlayer,
-    sf::Texture textureBox)
+void World::init()
 {
-    m_textureBackground = std::move(textureBackground);
-    m_background.setTexture(m_textureBackground);
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
 
-    m_player.init(std::move(texturePlayer));
+    m_background.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Background));
 
-    m_textureBox = std::move(textureBox);
+    m_foreground.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Foreground));
+    m_foreground.setColor(BACKGROUND_COLOR);
+
+    m_player.init(*resourceLoader.texture(ResourceLoader::TextureId::Player));
+
+    m_textureBox = resourceLoader.texture(ResourceLoader::TextureId::Box);
+
+    m_textureCrane = resourceLoader.texture(ResourceLoader::TextureId::Crane);
 }
 
 
-void World::generateStartPosition(const std::optional<unsigned int> &position)
+void World::reset(
+    const std::uint8_t cranesQuantity,
+    const std::optional<unsigned int> &positionIndex)
 {
-    clearBoxes();
+    clear();
 
-    if (position.has_value() && position.value() < INITIAL_POSITIONS.size())
+    if (positionIndex.has_value() && positionIndex.value() < INITIAL_POSITIONS.size())
     {
-        LOG_DEBUG("Set predefined initial position №" << position.value() << ".");
-        generatePredefinedPosition(INITIAL_POSITIONS.at(position.value()));
+        LOG_DEBUG("Set predefined initial position №" << positionIndex.value() << ".");
+        generatePredefinedPosition(INITIAL_POSITIONS.at(positionIndex.value()));
     }
     else
     {
         generateRandomPosition();
     }
+
+    addCranes(std::clamp(
+        cranesQuantity,
+        std::uint8_t(1),
+        MAX_INITIAL_CRANES_QUANTITY));
 }
 
 
@@ -61,6 +74,11 @@ void World::update(const Duration &elapsed)
     {
         Box &box = boxInfo.second;
         updateBox(box, elapsed);
+    }
+
+    for (auto &crane : m_cranes)
+    {
+        updateCrane(crane, elapsed);
     }
 
     checkBottomRow();
@@ -126,6 +144,11 @@ void World::render(sf::RenderTarget &target)
 {
     target.draw(m_background);
 
+    for (const Crane &crane : m_cranes)
+    {
+        crane.render(target, m_transform);
+    }
+
     for (const auto &boxInfo : m_boxes)
     {
         const Box& box = boxInfo.second;
@@ -133,6 +156,8 @@ void World::render(sf::RenderTarget &target)
     }
 
     m_player.render(target, m_transform);
+
+    target.draw(m_foreground);
 }
 
 
@@ -141,6 +166,7 @@ void World::setup()
     std::random_device device;
     m_randomEngine = std::mt19937(device());
 
+    m_transform = sf::Transform();
     // Переход в систему координат, у которой начало в левом нижнем углу
     // игровой области, ось X направлена вправо, ось Y направлена вверх.
     // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
@@ -149,19 +175,20 @@ void World::setup()
 }
 
 
-void World::clearBoxes()
+void World::clear()
 {
     for (auto &column : m_boxesLocations)
     {
         column.clear();
     }
+    m_boxes.clear();
+    m_cranes.clear();
 }
 
 
 void World::generateRandomPosition()
 {
     constexpr Object::Coordinate MAX_BOXES_IN_COLUMN = 2;
-
 
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
@@ -218,7 +245,7 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 void World::addBox(Object::Coordinate row, Object::Coordinate column)
 {
     Box box(m_lastBoxId);
-    box.init(m_textureBox);
+    box.init(*m_textureBox);
     box.setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
 
     m_boxes.emplace(m_lastBoxId, box);
@@ -226,6 +253,35 @@ void World::addBox(Object::Coordinate row, Object::Coordinate column)
     m_boxesLocations[column].push_back(m_lastBoxId);
 
     ++m_lastBoxId;
+}
+
+
+void World::addCranes(const std::uint8_t cranesQuantity)
+{
+    for (std::uint8_t i = 0; i < cranesQuantity; ++i)
+    {
+        addCrane();
+    }
+}
+
+
+void World::addCrane()
+{
+    Crane crane;
+    crane.init(*m_textureCrane);
+
+    std::uniform_int_distribution<std::mt19937::result_type> distribution(0, 1);
+    const bool left = distribution(m_randomEngine) == 0;
+    crane.setDirection(left);
+
+    const sf::Vector2f position(
+        crane.isLeft()
+            ? BOX_SIZE * (m_boxesLocations.size() + 1) // FIXME: сделать симметрично.
+            : -crane.width() - BOX_SIZE,
+        CRANE_VERTICAL_POSITION);
+    crane.setPosition(position);
+
+    m_cranes.push_back(crane);
 }
 
 
@@ -250,7 +306,6 @@ bool World::canPlayerMove(
     const Object::Coordinate column = playerColumn.value();
     const Object::Coordinate row = playerRow.value();
 
-// TODO: После прыжка вверх находясь в наивысшей точек прыжка можно пойти вбок если там есть ящик, на который можно сразу встать.
     switch (direction)
     {
     case Player::Direction::None:
@@ -419,6 +474,12 @@ void World::updateBox(Box &box, const Duration &elapsed)
             m_boxesLocations[column].push_back(box.id());
         }
     }
+}
+
+
+void World::updateCrane(Crane &crane, const Duration &elapsed)
+{
+    crane.update(elapsed);
 }
 
 

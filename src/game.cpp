@@ -3,17 +3,12 @@
 #include <iostream>
 
 #include "log.h"
+#include "resource_loader.h"
 #include "version/version.h"
 
 
 namespace
 {
-
-const std::string RESOURCES_DIR("resources/");
-const std::string TEXTURE_BOX("box.png");
-const std::string TEXTURE_PLAYER("player.png");
-const std::string TEXTURE_BACKGROUND("background.png");
-
 
 Player::Direction directionByKey(sf::Keyboard::Key key)
 {
@@ -37,23 +32,6 @@ Player::Direction directionByKey(sf::Keyboard::Key key)
     }
 }
 
-bool loadTexture(
-    const std::string &file,
-    sf::Texture &texture,
-    std::string* errorDescription)
-{
-    const bool result = texture.loadFromFile(RESOURCES_DIR + file);
-    if (!result)
-    {
-        if (errorDescription != nullptr)
-        {
-            *errorDescription = "Could not load resource '" + file + '\'';
-        }
-        return result;
-    }
-    return result;
-}
-
 }
 
 
@@ -68,25 +46,15 @@ Game::Game()
 }
 
 
-bool Game::init(std::string* errorDescription)
+bool Game::init()
 {
     // Загрузка текстур и звуков.
-    sf::Texture textureBox;
-    sf::Texture texturePlayer;
-    sf::Texture textureBackground;
-    const bool result =
-        loadTexture(TEXTURE_BOX, textureBox, errorDescription) &&
-        loadTexture(TEXTURE_PLAYER, texturePlayer, errorDescription) &&
-        loadTexture(TEXTURE_BACKGROUND, textureBackground, errorDescription);
+    const bool result = ResourceLoader::instance().load();
     if (!result)
     {
-        return result;
+        return false;
     }
-
-    m_world.init(
-        textureBackground,
-        texturePlayer,
-        textureBox);
+    m_world.init();
     return result;
 }
 
@@ -113,9 +81,11 @@ void Game::restartClock()
 }
 
 
-void Game::reset(const std::optional<unsigned int> &position)
+void Game::reset(
+    const std::uint8_t cranesQuantity,
+    const std::optional<unsigned int> &position)
 {
-    m_world.generateStartPosition(position);
+    m_world.reset(cranesQuantity, position);
 }
 
 

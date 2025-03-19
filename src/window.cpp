@@ -55,7 +55,7 @@ void Window::create()
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
     m_window.create(
-        sf::VideoMode(m_windowSize.x, m_windowSize.y, 32),
+        sf::VideoMode(m_windowSize.x, m_windowSize.y),
         m_windowTitle,
         style);
     m_window.setFramerateLimit(FPS_LIMIT);
@@ -117,6 +117,7 @@ void Window::resize(const sf::Vector2u &size)
         // Высота больше.
         viewSize.y = size.y * SCREEN_SIZE.y / (size.x / ASPECT_RATIO);
     }
+    // FIXME: Выполнить обрезание игровой области, чтобы скрыть краны.
     m_view.setSize(viewSize.x, viewSize.y);
     m_window.setView(m_view);
 }

@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "objects/box.h"
+#include "objects/crane.h"
 #include "objects/player.h"
 
 
@@ -30,11 +31,10 @@ class World final
 {
 public:
     explicit World();
-    void init(
-        sf::Texture textureBackground,
-        sf::Texture texturePlayer,
-        sf::Texture textureBox);
-    void generateStartPosition(const std::optional<unsigned int> &position = std::nullopt);
+    void init();
+    void reset(
+        const std::uint8_t cranesQuantity,
+        const std::optional<unsigned int> &positionIndex = std::nullopt);
     void update(const Duration &elapsed);
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
@@ -43,7 +43,7 @@ public:
 
 private:
     void setup();
-    void clearBoxes();
+    void clear();
     /*!
      * Случайным образом расставляет ящики и определяет положение игрока.
      * Случайное стартовое положение должно соответствовать критериям:
@@ -55,6 +55,8 @@ private:
     void generateRandomPosition();
     void generatePredefinedPosition(const InitialPosition &initialPosition);
     void addBox(Object::Coordinate row, Object::Coordinate column);
+    void addCranes(const std::uint8_t cranesQuantity);
+    void addCrane();
     void setPlayerColumn(Object::Coordinate column);
     bool canPlayerMove(
         const std::optional<Object::Coordinate> &playerRow,
@@ -70,6 +72,7 @@ private:
         Object::Coordinate column) const;
     void updatePlayer(const Duration &elapsed);
     void updateBox(Box &box, const Duration &elapsed);
+    void updateCrane(Crane &crane, const Duration &elapsed);
     void startMoveBox(
         Object::Coordinate row,
         Object::Coordinate column,
@@ -85,18 +88,21 @@ private:
     Object::Coordinate columnHeight(Object::Coordinate column) const noexcept;
 
 private:
-    sf::Sprite m_background;
-    sf::Texture m_textureBackground;
-    sf::Transform m_transform;
-
-    sf::Texture m_textureBox;
-
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
-    std::array<std::list<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::map<Box::Id, Box> m_boxes;
+    std::array<std::list<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
+    std::shared_ptr<const sf::Texture> m_textureBox;
     Box::Id m_lastBoxId{ 0 };
+
+    std::vector<Crane> m_cranes;
+    std::shared_ptr<const sf::Texture> m_textureCrane;
+
+    sf::Sprite m_background;
+    sf::Sprite m_foreground;
+
+    sf::Transform m_transform;
 
     mutable std::mt19937 m_randomEngine;
 };

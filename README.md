@@ -12,6 +12,7 @@ Stack Attack — аркадная игра, симулятор грузчика 
 
 Видео
 * Siemens C45, Stack Attack https://www.youtube.com/watch?v=vyp7V7llTQY
+* Stack Attack Game On Siemens C45 Old Phone https://www.youtube.com/watch?v=cjh7mMdTulk
 * Siemens A50 games: Stack Attack & Balloon Shooter - by Old Phones World https://www.youtube.com/watch?v=6PaLFAZN518
 * Siemens A55 VS Siemens A52 https://www.youtube.com/watch?v=oFKKd_a7sPI
 * Siemens Stack Attack https://rutube.ru/video/1845cedaf8b56ca77863d2d026f7de9a/

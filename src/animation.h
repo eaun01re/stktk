@@ -17,7 +17,10 @@ struct TextureSpriteIndex
      * \param[in] column Номер колонки в таблице спрайтов.
      * \param[in] mirrored Признак отражения по горизонтали.
      */
-    TextureSpriteIndex(unsigned int row, unsigned int column, bool mirrored = false)
+    TextureSpriteIndex(
+        unsigned int row,
+        unsigned int column,
+        bool mirrored = false)
         : row(row)
         , column(column)
         , mirrored(mirrored)
@@ -26,7 +29,7 @@ struct TextureSpriteIndex
 
     unsigned int row;
     unsigned int column;
-    bool mirrored{ false };
+    bool mirrored;
 };
 
 using AnimationId = unsigned int;

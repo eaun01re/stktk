@@ -52,6 +52,7 @@ protected:
 
     /// Скорость, пиксли игрового мира в секунду.
     sf::Vector2f m_speed;
-    sf::Vector2f m_offset; /// Текущее смещение с начала движения.
+    /// Текущее смещение с начала движения.
+    sf::Vector2f m_offset;
     sf::Vector2f m_movementLength;
 };

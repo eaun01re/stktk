@@ -1,5 +1,3 @@
-#include <cstdlib>
-
 #include "game.h"
 #include "log.h"
 #include "version/version.h"
@@ -49,14 +47,13 @@ int main(int argc, char *argv[])
     LOG_INFO("--- Starting " << ProjectName << ' ' << ProjectVersion << " ---");
 
     Game game;
-    std::string result;
-    if (!game.init(&result))
+    if (!game.init())
     {
-        LOG_ERROR("Failed to initialize application. Error: " << result);
+        LOG_ERROR("Failed to initialize application.");
         return 1;
     }
     const std::optional<unsigned int> position = argc > 1 ? positionNumber(argv[1]) : std::nullopt;
-    game.reset(position);
+    game.reset(3, position);
     while (!game.window().isDone())
     {
 //        game.handleInput();

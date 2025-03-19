@@ -79,9 +79,9 @@ void Box::init(const sf::Texture &texture)
         TEXTURE_SIZE,
         ANIMATIONS,
         ANIMATION_INTERVAL));
+    setStyle(randomRestStyle());
     m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
     m_sprite.setColor(BACKGROUND_COLOR);
-    setStyle(randomRestStyle());
 }
 
 

@@ -10,8 +10,10 @@ class Game final
 public:
     explicit Game();
 
-    bool init(std::string* errorDescription = nullptr);
-    void reset(const std::optional<unsigned int> &position = std::nullopt);
+    bool init();
+    void reset(
+        const std::uint8_t cranesQuantity = 1,
+        const std::optional<unsigned int> &position = std::nullopt);
     void handleInput();
     void update();
     void render();
