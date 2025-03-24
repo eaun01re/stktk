@@ -1,11 +1,8 @@
 #pragma once
 
 
-#include <memory>
-
 #include <SFML/Graphics.hpp>
 
-#include "animation.h"
 #include "objects/object.h"
 
 
@@ -47,12 +44,13 @@ public:
     void stop();
     Direction direction() const noexcept;
 
+protected:
+    void moveFinished() override;
+
 private:
     void setDirection(Direction direction, bool push);
 
 private:
-    std::unique_ptr<Animation> m_animation;
-
     Direction m_direction{ Direction::None };
     Direction m_nextDirection{ Direction::None };
     bool m_lookLeft{ true };

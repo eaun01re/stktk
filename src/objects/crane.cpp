@@ -28,6 +28,7 @@ const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
 
 
 Crane::Crane(const Crane &crane)
+    : Object(crane)
 {
     init(crane.m_texture);
     setPosition(crane.position());
@@ -52,28 +53,8 @@ void Crane::init(const sf::Texture &texture)
 
 void Crane::update(const Duration &elapsed)
 {
-    if (m_animation->update(elapsed))
-    {
-        m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
-    }
-
-    if (!isTolerant(m_speed))
-    {
-        return;
-    }
-
-    const double elapsedSeconds = elapsed.count();
-    const sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
-    m_sprite.move(offset.x, offset.y);
-
-    if ((m_movementLength.x != 0 &&
-        std::isless(m_movementLength.x, 0.0f) == std::isless(m_movementLength.x - offset.x, 0.0f)) ||
-        (m_movementLength.y != 0 &&
-        std::isless(m_movementLength.y, 0.0f) == std::isless(m_movementLength.y - offset.y, 0.0f)))
-    {
-        m_movementLength.x -= offset.x;
-        m_movementLength.y -= offset.y;
-    }
+    Object::update(elapsed);
+    Object::move(elapsed);
 }
 
 

@@ -55,14 +55,8 @@ Duration blowDuration()
 }
 
 
-Box::Box(Id id)
-    : m_id(id)
-{
-}
-
-
 Box::Box(const Box &box)
-    : m_id(box.id())
+    : Object(box)
 {
     init(box.m_texture);
     setPosition(box.position());
@@ -87,40 +81,8 @@ void Box::init(const sf::Texture &texture)
 
 void Box::update(const Duration &elapsed)
 {
-    if (m_animation->update(elapsed))
-    {
-        m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
-    }
-
-    if (!isTolerant(m_speed))
-    {
-        return;
-    }
-
-    const double elapsedSeconds = elapsed.count();
-    const sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
-    m_sprite.move(offset.x, offset.y);
-
-    if ((m_movementLength.x != 0 &&
-         std::isless(m_movementLength.x, 0.0f) == std::isless(m_movementLength.x - offset.x, 0.0f)) ||
-        (m_movementLength.y != 0 &&
-         std::isless(m_movementLength.y, 0.0f) == std::isless(m_movementLength.y - offset.y, 0.0f)))
-    {
-        m_movementLength.x -= offset.x;
-        m_movementLength.y -= offset.y;
-    }
-    else
-    {
-        normalizePosition(true, true);
-        m_speed = sf::Vector2f();
-        m_movementLength = sf::Vector2f();
-    }
-}
-
-
-Box::Id Box::id() const noexcept
-{
-    return m_id;
+    Object::update(elapsed);
+    Object::move(elapsed);
 }
 
 

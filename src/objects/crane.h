@@ -1,11 +1,8 @@
 #pragma once
 
 
-#include <memory>
-
 #include <SFML/Graphics.hpp>
 
-#include "animation.h"
 #include "objects/object.h"
 
 
@@ -39,6 +36,5 @@ public:
     bool isLeft() const noexcept;
 
 private:
-    std::unique_ptr<Animation> m_animation;
     bool m_left{ true };
 };

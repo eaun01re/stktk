@@ -91,13 +91,14 @@ private:
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
-    std::map<Box::Id, Box> m_boxes;
-    std::array<std::list<Box::Id>, BOXES_COLUMNS> m_boxesLocations;
+    std::map<Object::Id, Box> m_boxes;
+    std::array<std::list<Object::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::shared_ptr<const sf::Texture> m_textureBox;
-    Box::Id m_lastBoxId{ 0 };
 
     std::vector<Crane> m_cranes;
     std::shared_ptr<const sf::Texture> m_textureCrane;
+
+    std::map<Object::Id, Object::Id> m_objectParents;
 
     sf::Sprite m_background;
     sf::Sprite m_foreground;

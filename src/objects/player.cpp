@@ -101,39 +101,14 @@ void Player::init(const sf::Texture &texture)
 
 void Player::update(const Duration &elapsed)
 {
-    if (m_animation->update(elapsed))
-    {
-        m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
-    }
+    Object::update(elapsed);
 
     if (!isMoving())
     {
         m_lookLeft = m_animation->currentSpriteIndex() < ANIMATIONS.at(Animations::Idle).size() / 2;
     }
 
-    if (!isTolerant(m_speed))
-    {
-        return;
-    }
-
-    const double elapsedSeconds = elapsed.count();
-    const sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
-    m_sprite.move(offset.x, offset.y);
-
-    if ((m_movementLength.x != 0 &&
-        std::isless(m_movementLength.x, 0.0f) == std::isless(m_movementLength.x - offset.x, 0.0f)) ||
-        (m_movementLength.y != 0 &&
-        std::isless(m_movementLength.y, 0.0f) == std::isless(m_movementLength.y - offset.y, 0.0f)))
-    {
-        m_movementLength.x -= offset.x;
-        m_movementLength.y -= offset.y;
-    }
-    else
-    {
-        normalizePosition(true, true);
-        setDirection(m_nextDirection, false);
-        m_nextDirection = Direction::None;
-    }
+    Object::move(elapsed);
 }
 
 
@@ -147,6 +122,13 @@ void Player::move(Direction direction, bool push, Direction nextDirection)
 void Player::stop()
 {
     m_animation->setAnimationId(Animations::Idle);
+}
+
+
+void Player::moveFinished()
+{
+    Object::moveFinished();
+    move(m_nextDirection, Direction::None);
 }
 
 

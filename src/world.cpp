@@ -183,6 +183,7 @@ void World::clear()
     }
     m_boxes.clear();
     m_cranes.clear();
+    // m_boxesParents.clear();
 }
 
 
@@ -244,15 +245,13 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 
 void World::addBox(Object::Coordinate row, Object::Coordinate column)
 {
-    Box box(m_lastBoxId);
+    Box box;
     box.init(*m_textureBox);
     box.setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
 
-    m_boxes.emplace(m_lastBoxId, box);
+    m_boxes.emplace(box.id(), box);
 
-    m_boxesLocations[column].push_back(m_lastBoxId);
-
-    ++m_lastBoxId;
+    m_boxesLocations[column].push_back(box.id());
 }
 
 
@@ -276,8 +275,8 @@ void World::addCrane()
 
     const sf::Vector2f position(
         crane.isLeft()
-            ? BOX_SIZE * (m_boxesLocations.size() + 1) // FIXME: сделать симметрично.
-            : -crane.width() - BOX_SIZE,
+            ? SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x
+            : -crane.width(),
         CRANE_VERTICAL_POSITION);
     crane.setPosition(position);
 
@@ -488,7 +487,7 @@ void World::startMoveBox(
     Object::Coordinate column,
     Box::Direction direction)
 {
-    const Box::Id boxId = m_boxesLocations[column].back();
+    const Object::Id boxId = m_boxesLocations[column].back();
     Box &box = m_boxes[boxId];
     box.move(direction);
     m_boxesLocations[column].pop_back();
@@ -503,7 +502,7 @@ void World::checkBottomRow()
     }
     for (Object::Coordinate column = 0; column < m_boxesLocations.size(); ++column)
     {
-        const Box::Id bottomBoxId = m_boxesLocations[column].front();
+        const Object::Id bottomBoxId = m_boxesLocations[column].front();
         m_boxes[bottomBoxId].blow();
     }
 }
@@ -530,7 +529,7 @@ void World::removeBlowedBoxes()
         {
             continue;
         }
-        const Box::Id bottomBoxId = column.front();
+        const Object::Id bottomBoxId = column.front();
         if (!m_boxes[bottomBoxId].isBlowed())
         {
             continue;
@@ -544,7 +543,7 @@ void World::removeBlowedBoxes()
 Object::Coordinate World::columnHeight(Object::Coordinate column) const noexcept
 {
     Object::Coordinate row = 0;
-    for (const Box::Id &boxId : m_boxesLocations[column])
+    for (const Object::Id &boxId : m_boxesLocations[column])
     {
         const Box &box = m_boxes.at(boxId);
         const std::optional<Object::Coordinate> boxRow = box.row();

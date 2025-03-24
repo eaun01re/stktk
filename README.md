@@ -26,7 +26,7 @@ Stack Attack — аркадная игра, симулятор грузчика 
 
     Debian
     ```sh
-    sudo apt-get install SFML-dev
+    sudo apt-get install libsfml-dev
     ```
 
     RHEL
