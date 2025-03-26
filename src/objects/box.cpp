@@ -12,7 +12,7 @@ namespace
 {
 
 /// Длительность отображения одного кадра анимации.
-const Duration ANIMATION_INTERVAL = std::chrono::milliseconds(300);
+const Duration ANIMATION_INTERVAL = ANIMATION_INTERVAL_DEFAULT;
 
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
 const sf::Vector2u TEXTURE_SIZE(1, 11);
@@ -31,9 +31,9 @@ const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
         Box::Animations::Blow,
         TextureSpriteIndices
         {
-            { 0, 8, false },
-            { 0, 9, false },
-            { 0, 10, false }
+            { 0, 8, false, ANIMATION_INTERVAL },
+            { 0, 9, false, ANIMATION_INTERVAL },
+            { 0, 10, false, ANIMATION_INTERVAL }
         }
     }
 };
@@ -71,8 +71,7 @@ void Box::init(const sf::Texture &texture)
     m_animation.reset(new Animation(
         m_texture,
         TEXTURE_SIZE,
-        ANIMATIONS,
-        ANIMATION_INTERVAL));
+        ANIMATIONS));
     setStyle(randomRestStyle());
     m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
     m_sprite.setColor(BACKGROUND_COLOR);

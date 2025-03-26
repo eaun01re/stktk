@@ -83,21 +83,33 @@ void Object::stopFalling()
 
 std::optional<Object::Coordinate> Object::column() const
 {
-    const bool hasCertainColumn = std::abs(normalizedPosition(position(), true, false).x - position().x) < COORDINATE_TOLERANCE;
-    const std::optional<unsigned int> result = hasCertainColumn
-        ? std::optional<unsigned int>(std::round(position().x / BOX_SIZE))
-        : std::nullopt;
-    return result;
+    const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), true, false);
+    if (std::abs(normalizedPosition.x - position().x) >= COORDINATE_TOLERANCE)
+    {
+        return std::nullopt;
+    }
+    const Coordinate coordinate = std::round(normalizedPosition.x / BOX_SIZE);
+    if (coordinate >= BOXES_COLUMNS)
+    {
+        return std::nullopt;
+    }
+    return coordinate;
 }
 
 
 std::optional<Object::Coordinate> Object::row() const
 {
-    const bool hasCertainRow = std::abs(normalizedPosition(position(), false, true).y - position().y) < COORDINATE_TOLERANCE;
-    const std::optional<unsigned int> result = hasCertainRow
-        ? std::optional<unsigned int>(std::round(position().y / BOX_SIZE))
-        : std::nullopt;
-    return result;
+    const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), false, true);
+    if (std::abs(normalizedPosition.y - position().y) >= COORDINATE_TOLERANCE)
+    {
+        return std::nullopt;
+    }
+    const Coordinate coordinate = std::round(normalizedPosition.y / BOX_SIZE);
+    if (coordinate >= BOXES_ROWS)
+    {
+        return std::nullopt;
+    }
+    return coordinate;
 }
 
 
@@ -112,6 +124,8 @@ void Object::update(const Duration &elapsed)
 {
     if (m_animation->update(elapsed))
     {
+        // Если анимация обновила текстуру,
+        // то спрайту назначается обновлённое значение.
         m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
     }
 }

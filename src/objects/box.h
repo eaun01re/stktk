@@ -51,3 +51,6 @@ private:
     Direction m_direction{ Direction::None };
     std::optional<TimePoint> m_blowStart;
 };
+
+
+using BoxPtr = std::shared_ptr<Box>;

@@ -4,10 +4,8 @@
 Animation::Animation(
     const sf::Texture &texture,
     const sf::Vector2u &spritesQuantity,
-    const AnimationMap &animations,
-    const Duration &switchTime)
+    const AnimationMap &animations)
     : m_animations(animations)
-    , m_switchTime(switchTime)
 {
     m_currentRect.width = texture.getSize().x / float(spritesQuantity.y);
     m_currentRect.height = texture.getSize().y / float(spritesQuantity.x);
@@ -59,12 +57,18 @@ bool Animation::update(const Duration &elapsed)
             return false;
         }
 
-        m_totalTime += elapsed;
-        if (m_totalTime < m_switchTime)
+        const Duration swtichTime = spritesIndices.at(m_currentSpriteIndex).duration;
+        if (swtichTime == ANIMATION_INTERVAL_INFINITY)
         {
             return false;
         }
-        m_totalTime -= m_switchTime;
+
+        m_totalTime += elapsed;
+        if (m_totalTime < swtichTime)
+        {
+            return false;
+        }
+        m_totalTime -= swtichTime;
 
         ++m_currentSpriteIndex;
     }

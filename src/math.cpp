@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "objects/box.h"
+#include "consts.h"
 
 
 bool isTolerant(const sf::Vector2f &vector)

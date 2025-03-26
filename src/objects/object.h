@@ -63,7 +63,7 @@ protected:
 
     std::unique_ptr<Animation> m_animation;
 
-    /// Скорость, пиксли игрового мира в секунду.
+    /// Скорость, пиксели игрового мира в секунду.
     sf::Vector2f m_speed;
     /// Текущее смещение с начала движения.
     sf::Vector2f m_offset;

@@ -41,8 +41,8 @@ public:
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     void move(Direction direction, bool push = false, Direction nextDirection = Direction::None);
-    void stop();
     Direction direction() const noexcept;
+    void stop();
 
 protected:
     void moveFinished() override;

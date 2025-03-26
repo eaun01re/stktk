@@ -5,6 +5,7 @@
 
 #include "initial_position.h"
 #include "log.h"
+#include "math.h"
 #include "resource_loader.h"
 
 
@@ -72,13 +73,13 @@ void World::update(const Duration &elapsed)
 
     for (auto &boxInfo : m_boxes)
     {
-        Box &box = boxInfo.second;
-        updateBox(box, elapsed);
+        BoxPtr &box = boxInfo.second;
+        updateBox(*box.get(), elapsed);
     }
 
-    for (auto &crane : m_cranes)
+    for (CranePtr &crane : m_cranes)
     {
-        updateCrane(crane, elapsed);
+        updateCrane(*crane.get(), elapsed);
     }
 
     checkBottomRow();
@@ -144,15 +145,15 @@ void World::render(sf::RenderTarget &target)
 {
     target.draw(m_background);
 
-    for (const Crane &crane : m_cranes)
+    for (const CranePtr &crane : m_cranes)
     {
-        crane.render(target, m_transform);
+        crane->render(target, m_transform);
     }
 
     for (const auto &boxInfo : m_boxes)
     {
-        const Box& box = boxInfo.second;
-        box.render(target, m_transform);
+        const BoxPtr& box = boxInfo.second;
+        box->render(target, m_transform);
     }
 
     m_player.render(target, m_transform);
@@ -183,7 +184,6 @@ void World::clear()
     }
     m_boxes.clear();
     m_cranes.clear();
-    // m_boxesParents.clear();
 }
 
 
@@ -193,7 +193,7 @@ void World::generateRandomPosition()
 
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
-        BOXES_COLUMNS - 1);
+        m_boxesLocations.size() - 1);
 
     // Расстановка ящиков.
     std::set<Object::Coordinate> columnsUsed;
@@ -243,15 +243,21 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 }
 
 
-void World::addBox(Object::Coordinate row, Object::Coordinate column)
+BoxPtr World::addBox()
 {
-    Box box;
-    box.init(*m_textureBox);
-    box.setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
+    BoxPtr box = std::make_shared<Box>();
+    box->init(*m_textureBox);
+    m_boxes.emplace(box->id(), box);
+    return box;
+}
 
-    m_boxes.emplace(box.id(), box);
 
-    m_boxesLocations[column].push_back(box.id());
+BoxPtr World::addBox(Object::Coordinate row, Object::Coordinate column)
+{
+    BoxPtr box = addBox();
+    box->setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
+    m_boxesLocations[column].push_back(box->id());
+    return box;
 }
 
 
@@ -266,21 +272,38 @@ void World::addCranes(const std::uint8_t cranesQuantity)
 
 void World::addCrane()
 {
-    Crane crane;
-    crane.init(*m_textureCrane);
+    CranePtr crane = std::make_shared<Crane>();
+    crane->init(*m_textureCrane);
+    resetCrane(*crane.get());
+    loadCrane(*crane.get());
+    m_cranes.push_back(crane);
+}
 
-    std::uniform_int_distribution<std::mt19937::result_type> distribution(0, 1);
-    const bool left = distribution(m_randomEngine) == 0;
-    crane.setDirection(left);
 
+void World::resetCrane(Crane &crane)
+{
+    std::uniform_int_distribution<std::mt19937::result_type> distributionDirection(0, 1);
+    const bool left = distributionDirection(m_randomEngine) == 0;
+    crane.move(left);
     const sf::Vector2f position(
         crane.isLeft()
             ? SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x
             : -crane.width(),
         CRANE_VERTICAL_POSITION);
     crane.setPosition(position);
+    std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
+        0,
+        m_boxesLocations.size() - 1);
+    crane.setDropColumn(distributionDirection(m_randomEngine));
+    crane.setDropColumn(11);
+}
 
-    m_cranes.push_back(crane);
+
+void World::loadCrane(Crane &crane)
+{
+    BoxPtr box = addBox();
+    crane.setBoxId(box->id());
+    box->setPosition(sum(crane.position(), BOX_OFFSET));
 }
 
 
@@ -479,6 +502,22 @@ void World::updateBox(Box &box, const Duration &elapsed)
 void World::updateCrane(Crane &crane, const Duration &elapsed)
 {
     crane.update(elapsed);
+
+    if (crane.boxId() != NULL_ID)
+    {
+        BoxPtr &box = m_boxes[crane.boxId()];
+        const std::optional<Object::Coordinate> boxColumn = box->column();
+        if (boxColumn.has_value() && boxColumn.value() == crane.dropColumn())
+        {
+            crane.drop();
+        }
+        else
+        {
+            box->move(crane.isLeft() ? Box::Direction::Left : Box::Direction::Right);
+        }
+    }
+
+    crane.move(crane.isLeft());
 }
 
 
@@ -488,8 +527,8 @@ void World::startMoveBox(
     Box::Direction direction)
 {
     const Object::Id boxId = m_boxesLocations[column].back();
-    Box &box = m_boxes[boxId];
-    box.move(direction);
+    BoxPtr &box = m_boxes[boxId];
+    box->move(direction);
     m_boxesLocations[column].pop_back();
 }
 
@@ -503,7 +542,7 @@ void World::checkBottomRow()
     for (Object::Coordinate column = 0; column < m_boxesLocations.size(); ++column)
     {
         const Object::Id bottomBoxId = m_boxesLocations[column].front();
-        m_boxes[bottomBoxId].blow();
+        m_boxes[bottomBoxId]->blow();
     }
 }
 
@@ -530,7 +569,7 @@ void World::removeBlowedBoxes()
             continue;
         }
         const Object::Id bottomBoxId = column.front();
-        if (!m_boxes[bottomBoxId].isBlowed())
+        if (!m_boxes[bottomBoxId]->isBlowed())
         {
             continue;
         }
@@ -545,9 +584,9 @@ Object::Coordinate World::columnHeight(Object::Coordinate column) const noexcept
     Object::Coordinate row = 0;
     for (const Object::Id &boxId : m_boxesLocations[column])
     {
-        const Box &box = m_boxes.at(boxId);
-        const std::optional<Object::Coordinate> boxRow = box.row();
-        if (box.isFalling() || !boxRow.has_value() || boxRow.value() != row)
+        const BoxPtr &box = m_boxes.at(boxId);
+        const std::optional<Object::Coordinate> boxRow = box->row();
+        if (box->isFalling() || !boxRow.has_value() || boxRow.value() != row)
         {
             break;
         }

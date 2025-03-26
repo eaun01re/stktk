@@ -10,9 +10,6 @@
 namespace
 {
 
-/// Длительность отображения одного кадра анимации.
-const Duration ANIMATION_INTERVAL = std::chrono::milliseconds(300);
-
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
 const sf::Vector2u TEXTURE_SIZE(3, 4);
 
@@ -92,8 +89,7 @@ void Player::init(const sf::Texture &texture)
     m_animation.reset(new Animation(
         m_texture,
         TEXTURE_SIZE,
-        ANIMATIONS,
-        ANIMATION_INTERVAL));
+        ANIMATIONS));
     m_animation->setAnimationId(Animations::Idle);
     m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
 }
@@ -119,6 +115,12 @@ void Player::move(Direction direction, bool push, Direction nextDirection)
 }
 
 
+Player::Direction Player::direction() const noexcept
+{
+    return m_direction;
+}
+
+
 void Player::stop()
 {
     m_animation->setAnimationId(Animations::Idle);
@@ -129,12 +131,6 @@ void Player::moveFinished()
 {
     Object::moveFinished();
     move(m_nextDirection, Direction::None);
-}
-
-
-Player::Direction Player::direction() const noexcept
-{
-    return m_direction;
 }
 
 

@@ -8,6 +8,17 @@
 #include "clock.h"
 
 
+namespace
+{
+
+/// Длительность отображения одного кадра анимации.
+const Duration ANIMATION_INTERVAL_DEFAULT = std::chrono::milliseconds(300);
+/// Длительность отображения кадра, обозначающая остановку анимации.
+const Duration ANIMATION_INTERVAL_INFINITY(0);
+
+}
+
+
 /// Положение фрагмента текстуры (спрайта) в таблице.
 /// Размеры фрагмента считаются известными.
 struct TextureSpriteIndex
@@ -20,16 +31,19 @@ struct TextureSpriteIndex
     TextureSpriteIndex(
         unsigned int row,
         unsigned int column,
-        bool mirrored = false)
+        bool mirrored = false,
+        Duration duration = ANIMATION_INTERVAL_DEFAULT)
         : row(row)
         , column(column)
         , mirrored(mirrored)
+        , duration(duration)
     {
     }
 
     unsigned int row;
     unsigned int column;
     bool mirrored;
+    Duration duration;
 };
 
 using AnimationId = unsigned int;
@@ -45,8 +59,7 @@ public:
     explicit Animation(
         const sf::Texture &texture,
         const sf::Vector2u &spritesQuantity,
-        const AnimationMap &animations,
-        const Duration &switchTime);
+        const AnimationMap &animations);
     void setAnimationId(const AnimationId id);
     bool update(const Duration &elapsed);
     unsigned int currentSpriteIndex() const noexcept;
@@ -57,8 +70,6 @@ private:
 
 private:
     const AnimationMap &m_animations;
-    /// Длительность отображения одного спрайта анимации.
-    const Duration m_switchTime;
 
     AnimationId m_currentAnimationId{ 0 };
     AnimationMap::const_iterator m_currentSpritesIndices;

@@ -12,6 +12,9 @@ namespace
 /// Высота, на которой расположен кран (нижняя граница текстуры).
 constexpr int CRANE_VERTICAL_POSITION = 44;
 
+/// Смещение положения удерживаемого ящика относительно положения крана.
+const sf::Vector2f BOX_OFFSET(4, -3);
+
 }
 
 
@@ -32,9 +35,18 @@ public:
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     float width() const noexcept;
-    void setDirection(bool left);
+    void move(bool left);
     bool isLeft() const noexcept;
+    Id boxId() const noexcept;
+    void setBoxId(Id id);
+    Coordinate dropColumn() const noexcept;
+    void setDropColumn(Coordinate column);
+    void drop();
 
 private:
     bool m_left{ true };
+    Id m_boxId{ NULL_ID };
+    Coordinate m_dropColumn;
 };
+
+using CranePtr = std::shared_ptr<Crane>;

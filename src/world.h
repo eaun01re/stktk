@@ -18,8 +18,6 @@ namespace
 
 /// Левый нижний угол области игрового мира, в которой происходит игра.
 const sf::Vector2f BOTTOM_LEFT_CORNER(4, 60);
-constexpr unsigned char BOXES_ROWS = 5;
-constexpr unsigned char BOXES_COLUMNS = 12;
 
 }
 
@@ -54,9 +52,12 @@ private:
      */
     void generateRandomPosition();
     void generatePredefinedPosition(const InitialPosition &initialPosition);
-    void addBox(Object::Coordinate row, Object::Coordinate column);
+    BoxPtr addBox();
+    BoxPtr addBox(Object::Coordinate row, Object::Coordinate column);
     void addCranes(const std::uint8_t cranesQuantity);
     void addCrane();
+    void resetCrane(Crane &crane);
+    void loadCrane(Crane &crane);
     void setPlayerColumn(Object::Coordinate column);
     bool canPlayerMove(
         const std::optional<Object::Coordinate> &playerRow,
@@ -91,14 +92,12 @@ private:
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
-    std::map<Object::Id, Box> m_boxes;
+    std::map<Object::Id, BoxPtr> m_boxes;
     std::array<std::list<Object::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::shared_ptr<const sf::Texture> m_textureBox;
 
-    std::vector<Crane> m_cranes;
+    std::vector<CranePtr> m_cranes;
     std::shared_ptr<const sf::Texture> m_textureCrane;
-
-    std::map<Object::Id, Object::Id> m_objectParents;
 
     sf::Sprite m_background;
     sf::Sprite m_foreground;

@@ -11,6 +11,12 @@ bool isTolerant(const sf::Vector2f &vector);
 
 sf::Vector2f multiply(const sf::Vector2f &vector, double a);
 
+template<typename T>
+sf::Vector2<T> sum(const sf::Vector2<T> &a, const sf::Vector2<T> &b)
+{
+    return sf::Vector2<T>(a.x + b.x, a.y + b.y);
+}
+
 /// Применяется для вертикального отражение текстуры.
 /// https://en.sfml-dev.org/forums/index.php?topic=12947.0
 sf::IntRect mirrorVertical(const sf::IntRect &rect);
