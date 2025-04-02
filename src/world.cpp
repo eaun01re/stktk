@@ -12,11 +12,32 @@
 namespace
 {
 
+/// Количество ящиков в начале игры.
 constexpr int INITIAL_BOX_QUANTITY = 12;
 /// Количество нижних рядов, на которых разрешено прыгать.
 constexpr int ROWS_WITH_ALLOWED_JUMP = 3;
 /// Максимальное количество кранов в начале игры.
 constexpr std::uint8_t MAX_INITIAL_CRANES_QUANTITY = 3;
+/// Расстояние в пикселях игрового мира между соседними ячейками для кранов.
+constexpr unsigned int CRANE_INTERVAL = 22;
+/// Интервал времени между появлениями кранов в начале игры.
+/// Левый нижний угол области игрового мира, в которой происходит игра.
+const sf::Vector2f BOTTOM_LEFT_CORNER(4, 60);
+/// Ширина области, в которой видны движущиеся объекты игры.
+const unsigned int GAME_REGION_WIDTH = SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x;
+
+sf::Vector2f craneStartPosition(
+    bool left,
+    unsigned int craneWidth,
+    float offset)
+{
+    const sf::Vector2f position(
+        left
+            ? GAME_REGION_WIDTH + offset
+            : -float(craneWidth) - offset,
+        CRANE_VERTICAL_POSITION);
+    return position;
+}
 
 }
 
@@ -45,10 +66,10 @@ void World::init()
 
 
 void World::reset(
-    const std::uint8_t cranesQuantity,
+    std::uint8_t cranesQuantity,
     const std::optional<unsigned int> &positionIndex)
 {
-    clear();
+    clearObjects();
 
     if (positionIndex.has_value() && positionIndex.value() < INITIAL_POSITIONS.size())
     {
@@ -60,10 +81,7 @@ void World::reset(
         generateRandomPosition();
     }
 
-    addCranes(std::clamp(
-        cranesQuantity,
-        std::uint8_t(1),
-        MAX_INITIAL_CRANES_QUANTITY));
+    addCranes(cranesQuantity);
 }
 
 
@@ -79,12 +97,19 @@ void World::update(const Duration &elapsed)
 
     for (CranePtr &crane : m_cranes)
     {
-        updateCrane(*crane.get(), elapsed);
+        if (crane != nullptr)
+        {
+            updateCrane(*crane.get(), elapsed);
+        }
     }
 
-    checkBottomRow();
-
-    removeBlowedBoxes();
+    if (blowBottomRow())
+    {
+        if (removeBlowedRow())
+        {
+            addCrane();
+        }
+    }
 }
 
 
@@ -147,7 +172,10 @@ void World::render(sf::RenderTarget &target)
 
     for (const CranePtr &crane : m_cranes)
     {
-        crane->render(target, m_transform);
+        if (crane != nullptr)
+        {
+            crane->render(target, m_transform);
+        }
     }
 
     for (const auto &boxInfo : m_boxes)
@@ -176,14 +204,18 @@ void World::setup()
 }
 
 
-void World::clear()
+void World::clearObjects()
 {
     for (auto &column : m_boxesLocations)
     {
         column.clear();
     }
     m_boxes.clear();
-    m_cranes.clear();
+
+    for (auto &crane : m_cranes)
+    {
+        crane.reset();
+    }
 }
 
 
@@ -261,9 +293,14 @@ BoxPtr World::addBox(Object::Coordinate row, Object::Coordinate column)
 }
 
 
-void World::addCranes(const std::uint8_t cranesQuantity)
+void World::addCranes(std::uint8_t cranesQuantity)
 {
-    for (std::uint8_t i = 0; i < cranesQuantity; ++i)
+    // Ограничение стартового количества кранов.
+    cranesQuantity = std::clamp(
+        cranesQuantity,
+        std::uint8_t(1),
+        MAX_INITIAL_CRANES_QUANTITY);
+    for (std::size_t i = 0; i < cranesQuantity; ++i)
     {
         addCrane();
     }
@@ -272,37 +309,101 @@ void World::addCranes(const std::uint8_t cranesQuantity)
 
 void World::addCrane()
 {
-    CranePtr crane = std::make_shared<Crane>();
-    crane->init(*m_textureCrane);
-    resetCrane(*crane.get());
+    const std::size_t cranesQuantity = this->cranesQuantity();
+    if (cranesQuantity >= MAX_CRANES_QUANTITY)
+    {
+        // Достигнуто максимальное количество кранов.
+        return;
+    }
+
+    CranePtr crane = makeCrane();
+    unsigned int craneIndex = 0;
+    float craneOffset = 0;
+    if (cranesQuantity != 0)
+    {
+        // Поиск положения для второго и последующий кранов.
+        const CranePtr &firstCrane = m_cranes.front();
+        const sf::Vector2f craneStartPosition = ::craneStartPosition(
+            firstCrane->isLeft(),
+            firstCrane->width(),
+            0);
+        const float firstCraneOffset =
+            std::abs(firstCrane->position().x - craneStartPosition.x);
+        float offset = 0;
+        for (unsigned int i = 1; i < m_cranes.size(); ++i)
+        {
+            if (m_cranes.at(i) != nullptr)
+            {
+                // Данная ячейка занята другим краном.
+                continue;
+            }
+            offset = firstCraneOffset - i * CRANE_INTERVAL;
+            craneIndex = i;
+            if (offset <= 0)
+            {
+                // Ячейча частично видна.
+                break;
+            }
+        }
+        if (craneIndex == m_cranes.size() - 1 && offset > 0)
+        {
+            offset -= m_cranes.size() * CRANE_INTERVAL;
+        }
+        craneOffset = offset;
+    }
+    resetCrane(*crane.get(), std::abs(craneOffset));
     loadCrane(*crane.get());
-    m_cranes.push_back(crane);
+    m_cranes[craneIndex] = crane;
 }
 
 
-void World::resetCrane(Crane &crane)
+std::size_t World::cranesQuantity() const noexcept
+{
+    std::size_t cranesQuantity = 0;
+    for (unsigned int i = 0; i < m_cranes.size(); ++i)
+    {
+        if (m_cranes.at(i) != nullptr)
+        {
+            ++cranesQuantity;
+        }
+    }
+    return cranesQuantity;
+}
+
+
+CranePtr World::makeCrane()
+{
+    CranePtr crane = std::make_shared<Crane>();
+    crane->init(*m_textureCrane);
+    return crane;
+}
+
+
+void World::resetCrane(Crane &crane, float offsetLength)
 {
     std::uniform_int_distribution<std::mt19937::result_type> distributionDirection(0, 1);
     const bool left = distributionDirection(m_randomEngine) == 0;
-    crane.move(left);
-    const sf::Vector2f position(
-        crane.isLeft()
-            ? SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x
-            : -crane.width(),
-        CRANE_VERTICAL_POSITION);
-    crane.setPosition(position);
+    const sf::Vector2f position =
+        craneStartPosition(left, crane.width(), offsetLength);
+    const float movementLength =
+        offsetLength + crane.width() + GAME_REGION_WIDTH;
+    crane.reset(position, left, movementLength);
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
         m_boxesLocations.size() - 1);
-    crane.setDropColumn(distributionDirection(m_randomEngine));
-    crane.setDropColumn(11);
+    crane.setDropColumn(distributionColumn(m_randomEngine));
 }
 
 
 void World::loadCrane(Crane &crane)
 {
+    if (crane.isLoaded())
+    {
+        return;
+    }
+
     BoxPtr box = addBox();
-    crane.setBoxId(box->id());
+    crane.load(box->id());
     box->setPosition(sum(crane.position(), BOX_OFFSET));
 }
 
@@ -440,7 +541,8 @@ void World::updatePlayer(const Duration &elapsed)
     }
 
     const float playerHeight = m_player.position().y;
-    const float columnHeight = float(m_boxesLocations[playerColumn.value()].size()) * BOX_SIZE;
+    const float columnHeight =
+        float(m_boxesLocations[playerColumn.value()].size()) * BOX_SIZE;
     if (playerHeight > columnHeight)
     {
         if (!m_player.isMoving())
@@ -482,7 +584,8 @@ void World::updateBox(Box &box, const Duration &elapsed)
     }
 
     // Ящик стоит на стопке.
-    // Не сброшенное направление - признак того, что движение только завершилось.
+    // Не сброшенное направление - признак того,
+    // что движение только завершилось.
     if (box.direction() != Box::Direction::None)
     {
         box.stopFalling();
@@ -491,7 +594,10 @@ void World::updateBox(Box &box, const Duration &elapsed)
         // Если ящик был перемещен из одной колонки в другую,
         // то необходимо обновление индексации.
         auto &boxesInColumn = m_boxesLocations[column];
-        if (std::find(boxesInColumn.cbegin(), boxesInColumn.cend(), box.id()) == boxesInColumn.cend())
+        if (boxesInColumn.cend() == std::find(
+                boxesInColumn.cbegin(),
+                boxesInColumn.cend(),
+                box.id()))
         {
             m_boxesLocations[column].push_back(box.id());
         }
@@ -513,11 +619,17 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
         }
         else
         {
-            box->move(crane.isLeft() ? Box::Direction::Left : Box::Direction::Right);
+            box->move(crane.isLeft()
+                ? Box::Direction::Left
+                : Box::Direction::Right);
         }
     }
 
-    crane.move(crane.isLeft());
+    if (crane.readyToReset())
+    {
+        // Кран проехал всё игровое поле.
+        resetCrane(crane);
+    }
 }
 
 
@@ -533,17 +645,20 @@ void World::startMoveBox(
 }
 
 
-void World::checkBottomRow()
+bool World::blowBottomRow()
 {
     if (!bottomRowFilled())
     {
-        return;
+        return false;
     }
+
+    // Начало удаления нижнего ряда.
     for (Object::Coordinate column = 0; column < m_boxesLocations.size(); ++column)
     {
         const Object::Id bottomBoxId = m_boxesLocations[column].front();
         m_boxes[bottomBoxId]->blow();
     }
+    return true;
 }
 
 
@@ -560,22 +675,19 @@ bool World::bottomRowFilled() const
 }
 
 
-void World::removeBlowedBoxes()
+bool World::removeBlowedRow()
 {
     for (auto &column : m_boxesLocations)
     {
-        if (column.empty())
-        {
-            continue;
-        }
         const Object::Id bottomBoxId = column.front();
         if (!m_boxes[bottomBoxId]->isBlowed())
         {
-            continue;
+            return false;
         }
         m_boxes.erase(bottomBoxId);
         column.pop_front();
     }
+    return true;
 }
 
 

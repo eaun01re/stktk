@@ -27,6 +27,7 @@ struct TextureSpriteIndex
      * \param[in] row Номер строки в таблице спрайтов.
      * \param[in] column Номер колонки в таблице спрайтов.
      * \param[in] mirrored Признак отражения по горизонтали.
+     * \param[in] duration Длительность отображения спрайта.
      */
     TextureSpriteIndex(
         unsigned int row,

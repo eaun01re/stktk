@@ -49,7 +49,7 @@ private:
 private:
     Animations m_style{ Animations::Rest0 };
     Direction m_direction{ Direction::None };
-    std::optional<TimePoint> m_blowStart;
+    std::optional<Duration> m_blowDuration;
 };
 
 

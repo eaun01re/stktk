@@ -82,6 +82,11 @@ void Box::update(const Duration &elapsed)
 {
     Object::update(elapsed);
     Object::move(elapsed);
+
+    if (m_blowDuration.has_value())
+    {
+        m_blowDuration = m_blowDuration.value() + elapsed;
+    }
 }
 
 
@@ -129,25 +134,22 @@ Box::Direction Box::direction() const noexcept
 
 void Box::blow()
 {
-    if (m_blowStart.has_value())
+    if (m_blowDuration.has_value())
     {
         return;
     }
 
-    m_blowStart = std::chrono::steady_clock::now();
+    m_blowDuration = Duration();
     setStyle(Box::Animations::Blow);
 }
 
 
 bool Box::isBlowed() const
 {
-    if (!m_blowStart.has_value())
+    if (!m_blowDuration.has_value())
     {
         return false;
     }
 
-    const TimePoint blowStart = m_blowStart.value();
-    const TimePoint now = Clock::now();
-    const Duration elapsed = std::chrono::duration_cast<Duration>(now - blowStart);
-    return elapsed > blowDuration();
+    return m_blowDuration.value() > blowDuration();
 }

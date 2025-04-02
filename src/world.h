@@ -16,8 +16,7 @@
 namespace
 {
 
-/// Левый нижний угол области игрового мира, в которой происходит игра.
-const sf::Vector2f BOTTOM_LEFT_CORNER(4, 60);
+constexpr std::size_t MAX_CRANES_QUANTITY = 5;
 
 }
 
@@ -31,7 +30,7 @@ public:
     explicit World();
     void init();
     void reset(
-        const std::uint8_t cranesQuantity,
+        std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
     void update(const Duration &elapsed);
     void requestMovePlayer(const Player::Direction direction);
@@ -41,7 +40,7 @@ public:
 
 private:
     void setup();
-    void clear();
+    void clearObjects();
     /*!
      * Случайным образом расставляет ящики и определяет положение игрока.
      * Случайное стартовое положение должно соответствовать критериям:
@@ -54,9 +53,40 @@ private:
     void generatePredefinedPosition(const InitialPosition &initialPosition);
     BoxPtr addBox();
     BoxPtr addBox(Object::Coordinate row, Object::Coordinate column);
-    void addCranes(const std::uint8_t cranesQuantity);
+    void addCranes(uint8_t cranesQuantity);
+    /*!
+     * Логика управления кранами, выработанная экспериментально.
+     * Может отличаться логики оригинальной игры.
+     * В игре предусмотрено фиксированное количество мест или "ячеек",
+     * в которые можно установить кран. Расстояние между двумя соседними
+     * ячейками также фиксировано. Это расстояние и количество ячеек
+     * подобрано так, чтобы на экране одновременно помещались все краны,
+     * кроме последнего, который был бы виден частично.
+     * Ячейки образуют кольцо и постоянно циркулируют по кругу. Как только
+     * ячейка покидает область видимости (фактически проверяется видимость
+     * крана в ней) она начинает новый круг со стартового положения.
+     * В зависимости от направления движения - вправо или влево - этим
+     * положением является место за левым или правым краем экрана
+     * соответственно, чтобы там целиком умещался кран и не был при этом
+     * виден. Направление движения на старте выбирается случайным образом.
+     * В начале игры кольцо из ячеек повернуто так, что в стартовом положении
+     * находится первая ячейка.
+     * Краны добавляются в игру в её начале, а также когда в процессе игры
+     * уничтожается заполненный нижний ряд ящиков и при этом есть свободные
+     * ячейки. Первый кран занимает первую ячейку. Для каждого следующего
+     * добавляемого крана выбирается та свободная ячейка, которой следующей
+     * по очереди начинать новый круг. Если эта ячейка хотя бы частично видна
+     * на момент добавления крана (исключением является случай, когда она
+     * находится в стартовом положении), то кран вводится в игру как бы на
+     * следующем круге циркулирования этой ячейки, чтобы не возникать внезапно
+     * посреди экрана. Это достигается путём добавления крану смещения длиной
+     * L = C * I, где C - количество ячеек, I - интервал между соседними
+     * ячейками.
+     */
     void addCrane();
-    void resetCrane(Crane &crane);
+    std::size_t cranesQuantity() const noexcept;
+    CranePtr makeCrane();
+    void resetCrane(Crane &crane, float offsetLength = 0);
     void loadCrane(Crane &crane);
     void setPlayerColumn(Object::Coordinate column);
     bool canPlayerMove(
@@ -78,9 +108,20 @@ private:
         Object::Coordinate row,
         Object::Coordinate column,
         Box::Direction direction);
-    void checkBottomRow();
+    /*!
+     * Запускает удаление нижнего ряда ящиков, если он заполнен.
+     * \sa bottomRowFilled.
+     * \return \c true, если нижний ряд заполнен, \c false - в противном случае.
+     */
+    bool blowBottomRow();
+    /*!
+     * \return \c true, если нижний ряд заполнен, \c false - в противном случае.
+     */
     bool bottomRowFilled() const;
-    void removeBlowedBoxes();
+    /*!
+     * \return \c true, если нижний ряд уничтожен, \c false - в противном случае.
+     */
+    bool removeBlowedRow();
     /*!
      * Возвращает высоту стопки, сложенной из неподвижных ящиков.
      * \param[in] column Номер столбца.
@@ -96,7 +137,7 @@ private:
     std::array<std::list<Object::Id>, BOXES_COLUMNS> m_boxesLocations;
     std::shared_ptr<const sf::Texture> m_textureBox;
 
-    std::vector<CranePtr> m_cranes;
+    std::array<CranePtr, MAX_CRANES_QUANTITY> m_cranes;
     std::shared_ptr<const sf::Texture> m_textureCrane;
 
     sf::Sprite m_background;

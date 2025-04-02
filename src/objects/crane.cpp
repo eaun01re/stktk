@@ -31,15 +31,6 @@ const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
 }
 
 
-Crane::Crane(const Crane &crane)
-    : Object(crane)
-{
-    init(crane.m_texture);
-    setPosition(crane.position());
-    move(crane.isLeft());
-}
-
-
 void Crane::init(const sf::Texture &texture)
 {
     Object::init(texture);
@@ -61,18 +52,26 @@ void Crane::update(const Duration &elapsed)
 }
 
 
-float Crane::width() const noexcept
+int Crane::width() const noexcept
 {
     return m_animation->rect().width;
 }
 
 
-void Crane::move(bool left)
+void Crane::reset(const sf::Vector2f &position, bool left, float movementLength)
+{
+    setPosition(position);
+    setDirection(left, movementLength);
+    m_readyToReset = false;
+}
+
+
+void Crane::setDirection(bool left, float movementLength)
 {
     m_left = left;
     const float directionMultiplier = m_left ? -1 : 1;
     m_speed = sf::Vector2f(directionMultiplier * CRANE_SPEED, 0);
-    m_movementLength = sf::Vector2f(directionMultiplier * width(), 0);
+    m_movementLength = sf::Vector2f(directionMultiplier * movementLength, 0);
 }
 
 
@@ -88,9 +87,15 @@ Object::Id Crane::boxId() const noexcept
 }
 
 
-void Crane::setBoxId(Id id)
+void Crane::load(Id boxId)
 {
-    m_boxId = id;
+    m_boxId = boxId;
+}
+
+
+bool Crane::isLoaded() const noexcept
+{
+    return m_boxId != NULL_ID;
 }
 
 
@@ -110,4 +115,16 @@ void Crane::drop()
 {
     m_boxId = NULL_ID;
     m_animation->setAnimationId(State::Open);
+}
+
+
+bool Crane::readyToReset() const noexcept
+{
+    return m_readyToReset;
+}
+
+
+void Crane::moveFinished()
+{
+    m_readyToReset = true;
 }

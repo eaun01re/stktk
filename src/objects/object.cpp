@@ -155,15 +155,14 @@ sf::Vector2f Object::move(const Duration &elapsed)
         m_sprite.move(offset.x, offset.y);
         m_movementLength.x -= offset.x;
         m_movementLength.y -= offset.y;
-        return offset;
     }
     else
     {
         offset = m_movementLength;
-        m_sprite.move(m_movementLength.x, m_movementLength.y);
+        m_sprite.move(offset.x, offset.y);
         moveFinished();
-        return offset;
     }
+    return offset;
 }
 
 
