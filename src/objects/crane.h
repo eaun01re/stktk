@@ -44,6 +44,7 @@ public:
      * \param[in] movementLength Расстояние, которое необходимо преодолеть.
      */
     void reset(const sf::Vector2f &position, bool left, float movementLength);
+    void stop();
 
     bool isLeft() const noexcept;
 

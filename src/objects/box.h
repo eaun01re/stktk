@@ -32,22 +32,17 @@ public:
 
 public:
     explicit Box() = default;
-    Box(const Box &box);
     virtual ~Box() = default;
 
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
-    Animations style() const noexcept;
     void move(Direction direction);
     Direction direction() const noexcept;
     void blow();
-    bool isBlowed() const;
+    bool isBlowing() const noexcept;
+    bool isBlowed() const noexcept;
 
 private:
-    void setStyle(Animations style);
-
-private:
-    Animations m_style{ Animations::Rest0 };
     Direction m_direction{ Direction::None };
     std::optional<Duration> m_blowDuration;
 };

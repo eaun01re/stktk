@@ -45,14 +45,22 @@ private:
      * Случайным образом расставляет ящики и определяет положение игрока.
      * Случайное стартовое положение должно соответствовать критериям:
      * 1. максимальное количество ящиков в стопке = 2;
-     * 2. должна быть хотя бы одна стопка с двумя ящиками (скорее всего),
-     *    иначе в таком положении ящики образуют заполненный ряд;
+     * 2. должна быть хотя бы одна стопка с более чем одним ящиком,
+     *    иначе ящики образуют заполненный ряд;
      * 3. игрок находится на самой левой стопке из двух ящиков.
+     * \sa MAX_BOXES_IN_COLUMN
      */
     void generateRandomPosition();
     void generatePredefinedPosition(const InitialPosition &initialPosition);
+    /*!
+     * Возвращает номер колонки, в которой располгается игрок в начале игры.
+     * \return Первая слева колонка, имеющая максимальную допустимую
+     * в начале игры высоту.
+     * \sa MAX_BOXES_IN_COLUMN
+     */
+    Coordinate initialPlayerColumn() const;
     BoxPtr addBox();
-    BoxPtr addBox(Object::Coordinate row, Object::Coordinate column);
+    BoxPtr addBox(Coordinate row, Coordinate column);
     void addCranes(uint8_t cranesQuantity);
     /*!
      * Логика управления кранами, выработанная экспериментально.
@@ -85,49 +93,57 @@ private:
      */
     void addCrane();
     std::size_t cranesQuantity() const noexcept;
-    CranePtr makeCrane();
+    CranePtr makeCrane() const;
     void resetCrane(Crane &crane, float offsetLength = 0);
     void loadCrane(Crane &crane);
-    void setPlayerColumn(Object::Coordinate column);
+    void setPlayerColumn(Coordinate column);
     bool canPlayerMove(
-        const std::optional<Object::Coordinate> &playerRow,
-        const std::optional<Object::Coordinate> &playerColumn,
+        const std::optional<Coordinate> &playerRow,
+        const std::optional<Coordinate> &playerColumn,
         const Player::Direction direction) const;
     bool canPlayerMoveLeftOrRight(
-        Object::Coordinate row,
-        Object::Coordinate column,
+        Coordinate row,
+        Coordinate column,
         bool left) const;
     Player::Direction playerNextDirection(
         Player::Direction direction,
-        Object::Coordinate row,
-        Object::Coordinate column) const;
+        Coordinate row,
+        Coordinate column) const;
     void updatePlayer(const Duration &elapsed);
-    void updateBox(Box &box, const Duration &elapsed);
+    /*!
+     * Обновляет ящик.
+     * \param[in] box Обновляемый ящик.
+     * \param[in] elapsed Время, прошедшее с прошлого обновления.
+     * \return \c true, если ящик следует немедленно удалить
+     * (был сбит в воздухе), \c false - в противном случае.
+     */
+    bool updateBox(Box &box, const Duration &elapsed);
     void updateCrane(Crane &crane, const Duration &elapsed);
     void startMoveBox(
-        Object::Coordinate row,
-        Object::Coordinate column,
+        Coordinate row,
+        Coordinate column,
         Box::Direction direction);
+    bool boxHitsPlayer(const Box &box) const noexcept;
+    bool canDropBox(Object::Id boxId, Coordinate column) const;
+    void dropBox(Crane &crane);
     /*!
-     * Запускает удаление нижнего ряда ящиков, если он заполнен.
-     * \sa bottomRowFilled.
-     * \return \c true, если нижний ряд заполнен, \c false - в противном случае.
+     * Запускает удаление нижнего ряда ящиков.
+     * \return \c true, если нижний ряд уничтожен,
+     * \c false - в противном случае.
      */
     bool blowBottomRow();
     /*!
-     * \return \c true, если нижний ряд заполнен, \c false - в противном случае.
+     * \return \c true, если нижний ряд заполнен,
+     * \c false - в противном случае.
      */
     bool bottomRowFilled() const;
-    /*!
-     * \return \c true, если нижний ряд уничтожен, \c false - в противном случае.
-     */
-    bool removeBlowedRow();
     /*!
      * Возвращает высоту стопки, сложенной из неподвижных ящиков.
      * \param[in] column Номер столбца.
      * \return Количество неподвижных ящиков.
      */
-    Object::Coordinate columnHeight(Object::Coordinate column) const noexcept;
+    Coordinate columnHeight(Coordinate column) const noexcept;
+    void stop();
 
 private:
     Player m_player;
@@ -144,6 +160,11 @@ private:
     sf::Sprite m_foreground;
 
     sf::Transform m_transform;
+
+    /// Количество заработанных очков.
+    unsigned int m_score{ 0 };
+    /// Признак активной стадии игры, в которой игрок может зарабатывать очки.
+    bool m_active{ true };
 
     mutable std::mt19937 m_randomEngine;
 };

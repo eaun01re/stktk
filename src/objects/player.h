@@ -26,13 +26,15 @@ public:
     enum Animations : AnimationId
     {
         Idle,
-        WalkLeft,
-        WalkRight,
-        PushLeft,
-        PushRight,
-        JumpLeft,
-        JumpRight
+        Walk,
+        Push,
+        Jump,
+        Dying,
+        Dead
     };
+
+public:
+    static unsigned int height();
 
 public:
     explicit Player() = default;
@@ -40,9 +42,13 @@ public:
 
     void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
-    void move(Direction direction, bool push = false, Direction nextDirection = Direction::None);
+    void move(
+        Direction direction,
+        bool push = false,
+        Direction nextDirection = Direction::None);
     Direction direction() const noexcept;
     void stop();
+    void die();
 
 protected:
     void moveFinished() override;

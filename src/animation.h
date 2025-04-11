@@ -13,8 +13,6 @@ namespace
 
 /// Длительность отображения одного кадра анимации.
 const Duration ANIMATION_INTERVAL_DEFAULT = std::chrono::milliseconds(300);
-/// Длительность отображения кадра, обозначающая остановку анимации.
-const Duration ANIMATION_INTERVAL_INFINITY(0);
 
 }
 
@@ -50,35 +48,63 @@ struct TextureSpriteIndex
 using AnimationId = unsigned int;
 /// Номера спрайтов, составляющих одну определенную анимацию.
 using TextureSpriteIndices = std::vector<TextureSpriteIndex>;
-/// Список всех возможных анимаций объекта.
+/// Карта всех возможных анимаций объекта.
 using AnimationMap = std::map<AnimationId, TextureSpriteIndices>;
 
+struct AnimationOriented
+{
+    /*!
+     * \param[in] id Идентификатор анимации.
+     * \param[in] mirrored Признак отражения по горизонтали.
+     */
+    explicit AnimationOriented(
+        AnimationId id,
+        bool mirrored = false)
+        : id(id)
+        , mirrored(mirrored)
+    {
+    }
 
-class Animation final
+    bool operator==(const AnimationOriented &other) const noexcept
+    {
+        return id == other.id && mirrored == other.mirrored;
+    }
+
+    AnimationId id;
+    bool mirrored;
+};
+
+
+class Animator final
 {
 public:
-    explicit Animation(
+    explicit Animator(
         const sf::Texture &texture,
         const sf::Vector2u &spritesQuantity,
         const AnimationMap &animations);
-    void setAnimationId(const AnimationId id);
+    void setAnimation(const AnimationOriented animation);
+    void setAnimationSequence(const std::vector<AnimationOriented> &sequence);
     bool update(const Duration &elapsed);
     unsigned int currentSpriteIndex() const noexcept;
     const sf::IntRect& rect() const noexcept;
 
 private:
+    void applyAnimationId(const AnimationOriented &animation);
+    void applyNextAnimation();
     void setSpriteIndex(const TextureSpriteIndex &index);
 
 private:
     const AnimationMap &m_animations;
 
-    AnimationId m_currentAnimationId{ 0 };
+    std::size_t m_currentAnimationIndex{ 0 };
+    std::vector<AnimationOriented> m_currentAnimationSequence;
+
     AnimationMap::const_iterator m_currentSpritesIndices;
     unsigned int m_currentSpriteIndex{ 0 };
     /// Участок текущего спрайта в текстуре.
     sf::IntRect m_currentRect;
     /// Признак принудительного обновления спрайта.
-    bool m_dirty{ false };
+    bool m_forceUpdate{ false };
 
     Duration m_totalTime;
 };

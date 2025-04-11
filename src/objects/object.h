@@ -20,25 +20,38 @@ constexpr float SPEED = 1.5 * BOX_SIZE;
 }
 
 
+using Coordinate = unsigned int;
+
+
+struct Coordinates
+{
+    std::optional<Coordinate> row;
+    std::optional<Coordinate> column;
+};
+
+
 class Object
 {
 public:
     using Id = unsigned long;
-    using Coordinate = unsigned int;
 
 public:
     explicit Object();
     Object(const Object &object);
     virtual ~Object() = default;
 
-    Id id() const noexcept;
+    virtual void update(const Duration &elapsed);
+    virtual void render(sf::RenderTarget &target, const sf::Transform &transform) const;
     virtual void init(const sf::Texture &texture);
+
+    Id id() const noexcept;
     void setPosition(const sf::Vector2f &position);
     const sf::Vector2f& position() const noexcept;
     const sf::Vector2f& speed() const noexcept;
     bool isFalling() const noexcept;
     bool isMoving() const;
     void stopFalling();
+    Coordinates coordinates() const;
     std::optional<Coordinate> column() const;
     std::optional<Coordinate> row() const;
     /*!
@@ -48,11 +61,11 @@ public:
      * \param[in] vertical Выполнять нормализацию по вертикали.
      */
     void normalizePosition(bool horizontal, bool vertical);
-    virtual void update(const Duration &elapsed);
-    virtual void render(sf::RenderTarget &target, const sf::Transform &transform) const;
+    void setAnimationId(const AnimationOriented &animation);
+    void setAnimationIds(const std::vector<AnimationOriented> &ids);
 
 protected:
-    sf::Vector2f move(const Duration &elapsed);
+    void move(const Duration &elapsed);
     virtual void moveFinished();
 
 protected:
@@ -61,7 +74,9 @@ protected:
     sf::Sprite m_sprite;
     sf::Texture m_texture;
 
-    std::unique_ptr<Animation> m_animation;
+    std::unique_ptr<Animator> m_animator;
+    std::vector<AnimationOriented> m_animationIds;
+    std::size_t m_currentAnimationId{ 0 };
 
     /// Скорость, пиксели игрового мира в секунду.
     sf::Vector2f m_speed;

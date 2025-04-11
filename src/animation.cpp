@@ -1,7 +1,7 @@
 #include "animation.h"
 
 
-Animation::Animation(
+Animator::Animator(
     const sf::Texture &texture,
     const sf::Vector2u &spritesQuantity,
     const AnimationMap &animations)
@@ -13,56 +13,81 @@ Animation::Animation(
 }
 
 
-void Animation::setAnimationId(const AnimationId id)
+void Animator::setAnimation(const AnimationOriented animation)
 {
-    if (m_currentAnimationId == id)
+    setAnimationSequence({ animation });
+}
+
+
+void Animator::setAnimationSequence(
+    const std::vector<AnimationOriented> &sequence)
+{
+    if (m_currentAnimationSequence == sequence)
     {
         return;
     }
 
-    const auto it = m_animations.find(id);
+    m_currentAnimationSequence = sequence;
+    if (!m_currentAnimationSequence.empty())
+    {
+        applyAnimationId(m_currentAnimationSequence[0]);
+    }
+}
+
+
+unsigned int Animator::currentSpriteIndex() const noexcept
+{
+    return m_currentSpriteIndex;
+}
+
+
+const sf::IntRect& Animator::rect() const noexcept
+{
+    return m_currentRect;
+}
+
+
+void Animator::applyAnimationId(const AnimationOriented &animation)
+{
+    const auto it = m_animations.find(animation.id);
     if (it == m_animations.cend())
     {
         return;
     }
 
     m_currentSpritesIndices = it;
-    m_currentAnimationId = id;
+    m_currentAnimationIndex = 0;
     m_currentSpriteIndex = 0;
     // Принудительное обновление анимации после смены спрайтов.
-    m_dirty = true;
+    m_forceUpdate = true;
 }
 
 
-unsigned int Animation::currentSpriteIndex() const noexcept
+void Animator::applyNextAnimation()
 {
-    return m_currentSpriteIndex;
+    if (m_currentAnimationIndex >= m_currentAnimationSequence.size() - 1)
+    {
+        return;
+    }
+
+    ++m_currentAnimationIndex;
+    applyAnimationId(m_currentAnimationSequence[m_currentAnimationIndex]);
 }
 
 
-const sf::IntRect& Animation::rect() const noexcept
-{
-    return m_currentRect;
-}
-
-
-bool Animation::update(const Duration &elapsed)
+bool Animator::update(const Duration &elapsed)
 {
     const TextureSpriteIndices &spritesIndices = m_currentSpritesIndices->second;
 
-    if (!m_dirty)
+    if (!m_forceUpdate)
     {
-        if (spritesIndices.size() == 1)
+        if (spritesIndices.size() <= 1 && m_currentAnimationSequence.size() == 1)
         {
             return false;
         }
 
-        const Duration swtichTime = spritesIndices.at(m_currentSpriteIndex).duration;
-        if (swtichTime == ANIMATION_INTERVAL_INFINITY)
-        {
-            return false;
-        }
-
+        const Duration &swtichTime =
+            spritesIndices.at(m_currentSpriteIndex).duration;
         m_totalTime += elapsed;
         if (m_totalTime < swtichTime)
         {
@@ -72,21 +97,27 @@ bool Animation::update(const Duration &elapsed)
 
         ++m_currentSpriteIndex;
     }
-    m_dirty = false;
+    m_forceUpdate = false;
 
     if (m_currentSpriteIndex >= spritesIndices.size())
     {
+        // Переход к первому спрайту.
         m_currentSpriteIndex = 0;
+
+        applyNextAnimation();
     }
+
     setSpriteIndex(spritesIndices[m_currentSpriteIndex]);
     return true;
 }
 
 
-void Animation::setSpriteIndex(const TextureSpriteIndex &index)
+void Animator::setSpriteIndex(const TextureSpriteIndex &index)
 {
     m_currentRect.top = index.row * m_currentRect.height;
-    if (index.mirrored)
+    const bool mirrored =
+        index.mirrored != m_currentAnimationSequence[m_currentAnimationIndex].mirrored;
+    if (mirrored)
     {
         m_currentRect.left = (index.column + 1) * std::abs(m_currentRect.width);
         m_currentRect.width = -std::abs(m_currentRect.width);

@@ -30,9 +30,20 @@ Object::Object(const Object &object)
 }
 
 
-Object::Id Object::id() const noexcept
+void Object::update(const Duration &elapsed)
 {
-    return m_id;
+    if (m_animator->update(elapsed))
+    {
+        // Если анимация обновила текстуру,
+        // то спрайту назначается обновлённое значение.
+        m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
+    }
+}
+
+
+void Object::render(sf::RenderTarget &target, const sf::Transform &transform) const
+{
+    target.draw(m_sprite, transform);
 }
 
 
@@ -40,6 +51,12 @@ void Object::init(const sf::Texture &texture)
 {
     m_texture = texture;
     m_sprite.setTexture(m_texture);
+}
+
+
+Object::Id Object::id() const noexcept
+{
+    return m_id;
 }
 
 
@@ -81,7 +98,16 @@ void Object::stopFalling()
 }
 
 
-std::optional<Object::Coordinate> Object::column() const
+Coordinates Object::coordinates() const
+{
+    Coordinates result;
+    result.row = this->row();
+    result.column = this->column();
+    return result;
+}
+
+
+std::optional<Coordinate> Object::column() const
 {
     const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), true, false);
     if (std::abs(normalizedPosition.x - position().x) >= COORDINATE_TOLERANCE)
@@ -97,7 +123,7 @@ std::optional<Object::Coordinate> Object::column() const
 }
 
 
-std::optional<Object::Coordinate> Object::row() const
+std::optional<Coordinate> Object::row() const
 {
     const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), false, true);
     if (std::abs(normalizedPosition.y - position().y) >= COORDINATE_TOLERANCE)
@@ -120,29 +146,25 @@ void Object::normalizePosition(bool horizontal, bool vertical)
 }
 
 
-void Object::update(const Duration &elapsed)
+void Object::setAnimationId(const AnimationOriented &animation)
 {
-    if (m_animation->update(elapsed))
-    {
-        // Если анимация обновила текстуру,
-        // то спрайту назначается обновлённое значение.
-        m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
-    }
+    setAnimationIds({ animation });
 }
 
 
-void Object::render(sf::RenderTarget &target, const sf::Transform &transform) const
+void Object::setAnimationIds(const std::vector<AnimationOriented> &ids)
 {
-    // FIXME: Перекрывать текстурой игрока текстуру мира.
-    target.draw(m_sprite, transform);
+    m_currentAnimationId = 0;
+    m_animationIds = ids;
+    m_animator->setAnimation(m_animationIds[m_currentAnimationId]);
 }
 
 
-sf::Vector2f Object::move(const Duration &elapsed)
+void Object::move(const Duration &elapsed)
 {
     if (!isTolerant(m_speed))
     {
-        return sf::Vector2f();
+        return;
     }
 
     const double elapsedSeconds = elapsed.count();
@@ -162,7 +184,6 @@ sf::Vector2f Object::move(const Duration &elapsed)
         m_sprite.move(offset.x, offset.y);
         moveFinished();
     }
-    return offset;
 }
 
 

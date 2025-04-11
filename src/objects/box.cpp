@@ -55,25 +55,16 @@ Duration blowDuration()
 }
 
 
-Box::Box(const Box &box)
-    : Object(box)
-{
-    init(box.m_texture);
-    setPosition(box.position());
-    setStyle(box.style());
-}
-
-
 void Box::init(const sf::Texture &texture)
 {
     Object::init(texture);
 
-    m_animation.reset(new Animation(
+    m_animator.reset(new Animator(
         m_texture,
         TEXTURE_SIZE,
         ANIMATIONS));
-    setStyle(randomRestStyle());
-    m_sprite.setTextureRect(mirrorVertical(m_animation->rect()));
+    setAnimationId(AnimationOriented(randomRestStyle()));
+    m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
     m_sprite.setColor(BACKGROUND_COLOR);
 }
 
@@ -81,25 +72,13 @@ void Box::init(const sf::Texture &texture)
 void Box::update(const Duration &elapsed)
 {
     Object::update(elapsed);
-    Object::move(elapsed);
 
     if (m_blowDuration.has_value())
     {
         m_blowDuration = m_blowDuration.value() + elapsed;
     }
-}
 
-
-Box::Animations Box::style() const noexcept
-{
-    return m_style;
-}
-
-
-void Box::setStyle(Animations style)
-{
-    m_style = style;
-    m_animation->setAnimationId(m_style);
+    Object::move(elapsed);
 }
 
 
@@ -140,16 +119,18 @@ void Box::blow()
     }
 
     m_blowDuration = Duration();
-    setStyle(Box::Animations::Blow);
+    m_speed = sf::Vector2f();
+    setAnimationId(AnimationOriented(Box::Animations::Blow));
 }
 
 
-bool Box::isBlowed() const
+bool Box::isBlowing() const noexcept
 {
-    if (!m_blowDuration.has_value())
-    {
-        return false;
-    }
+    return m_blowDuration.has_value() && m_blowDuration.value() <= blowDuration();
+}
 
-    return m_blowDuration.value() > blowDuration();
+
+bool Box::isBlowed() const noexcept
+{
+    return m_blowDuration.has_value() && m_blowDuration.value() > blowDuration();
 }
