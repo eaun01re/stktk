@@ -48,16 +48,21 @@ public:
         Direction nextDirection = Direction::None);
     Direction direction() const noexcept;
     void stop();
-    void die();
+    bool alive() const noexcept;
+    void setAlive(bool alive);
 
 protected:
     void moveFinished() override;
 
 private:
     void setDirection(Direction direction, bool push);
+    Animations animationId(
+        const sf::Vector2f &directions,
+        bool push) const noexcept;
 
 private:
     Direction m_direction{ Direction::None };
     Direction m_nextDirection{ Direction::None };
     bool m_lookLeft{ true };
+    bool m_alive{ true };
 };

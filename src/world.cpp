@@ -93,11 +93,11 @@ void World::reset(
     }
 
     setPlayerColumn(playerColumn);
+    m_player.setAlive(true);
 
     addCranes(cranesQuantity);
 
     m_score = 0;
-    m_active = true;
 }
 
 
@@ -560,18 +560,14 @@ void World::updatePlayer(const Duration &elapsed)
         movePlayer(m_playerRequestedDirection);
     }
 
-    if (!m_active)
-    {
-        return;
-    }
-
     const std::optional<Coordinate> playerColumn = m_player.column();
     if (!playerColumn.has_value())
     {
         return;
     }
 
-    if (m_playerRequestedDirection == Player::Direction::None && !m_player.isMoving())
+    if (m_player.alive() &&
+        m_playerRequestedDirection == Player::Direction::None && !m_player.isMoving())
     {
         m_player.stop();
     }
@@ -689,7 +685,7 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
     if (crane.readyToReset())
     {
         // Кран проехал всё игровое поле.
-        if (m_active)
+        if (m_player.alive())
         {
             resetCrane(crane);
         }
@@ -822,7 +818,6 @@ Coordinate World::columnHeight(Coordinate column) const noexcept
 
 void World::stop()
 {
-    m_active = false;
-    m_player.die();
+    m_player.setAlive(false);
     LOG_INFO("Game over. Score: " << m_score << '.');
 }

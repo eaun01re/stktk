@@ -163,8 +163,6 @@ private:
 
     /// Количество заработанных очков.
     unsigned int m_score{ 0 };
-    /// Признак активной стадии игры, в которой игрок может зарабатывать очки.
-    bool m_active{ true };
 
     mutable std::mt19937 m_randomEngine;
 };

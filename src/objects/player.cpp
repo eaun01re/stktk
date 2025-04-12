@@ -105,8 +105,21 @@ void Player::stop()
 }
 
 
-void Player::die()
+bool Player::alive() const noexcept
 {
+    return m_alive;
+}
+
+
+void Player::setAlive(bool alive)
+{
+    m_alive = alive;
+
+    if (m_alive)
+    {
+        return;
+    }
+
     std::random_device device;
     std::mt19937 randomEngine = std::mt19937(device());
     std::uniform_int_distribution<std::mt19937::result_type> distributionDirection(0, 1);
@@ -133,8 +146,16 @@ void Player::setDirection(Direction direction, bool push)
     m_movementLength = sf::Vector2f();
     m_direction = direction;
 
-    if ((direction & Direction::Left && direction & Direction::Right) ||
-        (direction & Direction::Up && direction & Direction::Down))
+    const bool left = direction & Direction::Left;
+    const bool right = direction & Direction::Right;
+    const bool up = direction & Direction::Up;
+    const bool down = direction & Direction::Down;
+    const sf::Vector2f directions(
+        float(right) - float(left),
+        float(up) - float(down));
+
+    // Проверка корректности направления.
+    if ((left && right) || (up && down))
     {
         // Некорректная комбинация направлений.
         LOG_WARNING("Attempt to set incorrect player direction: " << int(direction) << '.');
@@ -148,58 +169,33 @@ void Player::setDirection(Direction direction, bool push)
     }
 
     // Обновление направления взгляда.
-    if (direction & Direction::Left || direction & Direction::Right)
+    if (left || right)
     {
-        m_lookLeft = direction & Direction::Left;
+        m_lookLeft = left;
     }
 
-    switch (direction)
+    m_speed = multiply(directions, SPEED);
+    m_movementLength.x = BOX_SIZE * directions.x;
+    m_movementLength.y = direction != Direction::Down
+        ? BOX_SIZE * directions.y
+        : -std::numeric_limits<float>::infinity();
+    setAnimationId(AnimationOriented(
+        animationId(directions, push),
+        !m_lookLeft));
+}
+
+
+Player::Animations Player::animationId(
+    const sf::Vector2f &directions,
+    bool push) const noexcept
+{
+    if (!m_alive)
     {
-    case Direction::None:
-        break;
-    case Direction::Left:
-        m_speed = sf::Vector2f(-SPEED, 0);
-        m_movementLength = sf::Vector2f(-BOX_SIZE, 0);
-        setAnimationId(push
-            ? AnimationOriented(Animations::Push, false)
-            : AnimationOriented(Animations::Walk, false));
-        break;
-    case Direction::Right:
-        m_speed = sf::Vector2f(SPEED, 0);
-        m_movementLength = sf::Vector2f(BOX_SIZE, 0);
-        setAnimationId(push
-            ? AnimationOriented(Animations::Push, true)
-            : AnimationOriented(Animations::Walk, true));
-        break;
-    case Direction::Up:
-        m_speed = sf::Vector2f(0, SPEED);
-        m_movementLength = sf::Vector2f(0, BOX_SIZE);
-        setAnimationId(AnimationOriented(Animations::Jump, m_lookLeft));
-        break;
-    case Direction::Down:
-        m_speed = sf::Vector2f(0, -SPEED);
-        m_movementLength = sf::Vector2f(0, -std::numeric_limits<float>::infinity());
-        setAnimationId(AnimationOriented(Animations::Jump, m_lookLeft));
-        break;
-    case Direction::UpLeft:
-        m_speed = sf::Vector2f(-SPEED, SPEED);
-        m_movementLength = sf::Vector2f(-BOX_SIZE, BOX_SIZE);
-        setAnimationId(AnimationOriented(Animations::Jump, false));
-        break;
-    case Direction::UpRight:
-        m_speed = sf::Vector2f(SPEED, SPEED);
-        m_movementLength = sf::Vector2f(BOX_SIZE, BOX_SIZE);
-        setAnimationId(AnimationOriented(Animations::Jump, true));
-        break;
-    case Direction::DownLeft:
-        m_speed = sf::Vector2f(-SPEED, -SPEED);
-        m_movementLength = sf::Vector2f(-BOX_SIZE, -BOX_SIZE);
-        setAnimationId(AnimationOriented(Animations::Jump, false));
-        break;
-    case Direction::DownRight:
-        m_speed = sf::Vector2f(SPEED, -SPEED);
-        m_movementLength = sf::Vector2f(BOX_SIZE, -BOX_SIZE);
-        setAnimationId(AnimationOriented(Animations::Jump, true));
-        break;
+        return Player::Animations::Dead;
     }
+    if (directions.y != 0)
+    {
+        return Player::Animations::Jump;
+    }
+    return push ? Animations::Push : Animations::Walk;
 }

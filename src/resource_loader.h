@@ -10,31 +10,6 @@
 
 using TexturePtr = std::shared_ptr<const sf::Texture>;
 
-// class TT : public sf::Texture
-// {
-// public:
-//     explicit TT()
-//         : sf::Texture()
-//     {
-//         LOG_DEBUG("T::T()");
-//     }
-//     TT(const TT &tt)
-//         : sf::Texture(tt)
-//     {
-//         LOG_DEBUG("T::T(const TT &)");
-//     }
-//     ~TT()
-//     {
-//         LOG_DEBUG("T::~T()");
-//     }
-//     TT& operator=(const TT &tt)
-//     {
-//         LOG_DEBUG("T::operator =()");
-//         sf::Texture::operator=(tt);
-//         return *this;
-//     }
-// };
-
 
 class ResourceLoader final
 {
