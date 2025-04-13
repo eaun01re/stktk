@@ -20,7 +20,10 @@ public:
         Box,
         Crane,
         Background,
-        Foreground
+        Foreground,
+        Digits,
+        Frame,
+        Hourglass
     };
 
 public:

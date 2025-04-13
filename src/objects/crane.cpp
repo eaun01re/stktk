@@ -4,6 +4,7 @@
 
 #include "math.h"
 #include "objects/object.h"
+#include "resource_loader.h"
 
 
 namespace
@@ -24,9 +25,16 @@ const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
 }
 
 
-void Crane::init(const sf::Texture &texture)
+Crane::Crane()
 {
-    Object::init(texture);
+    init();
+}
+
+
+void Crane::init()
+{
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Crane));
 
     m_animator.reset(new Animator(
         m_texture,

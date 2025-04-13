@@ -6,6 +6,7 @@
 #include "log.h"
 #include "math.h"
 #include "objects/object.h"
+#include "resource_loader.h"
 
 
 namespace
@@ -58,10 +59,16 @@ unsigned int Player::height()
     return BOX_SIZE * 2;
 }
 
-
-void Player::init(const sf::Texture &texture)
+Player::Player()
 {
-    Object::init(texture);
+    init();
+}
+
+
+void Player::init()
+{
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Player));
 
     m_animator.reset(new Animator(
         m_texture,

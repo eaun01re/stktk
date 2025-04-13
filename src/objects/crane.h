@@ -28,10 +28,9 @@ public:
     };
 
 public:
-    explicit Crane() = default;
+    explicit Crane();
     virtual ~Crane() = default;
 
-    void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
 
     int width() const noexcept;
@@ -66,6 +65,7 @@ protected:
     void moveFinished() override;
 
 private:
+    void init();
     void setDirection(bool left, float movementLength);
 
 private:

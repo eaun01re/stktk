@@ -20,7 +20,6 @@ public:
 
     const Window& window() const;
 
-    // sf::Time elapsed() const;
     void restartClock();
 
 private:
@@ -31,7 +30,7 @@ private:
 private:
     Window m_window;
 
-    World m_world;
+    std::unique_ptr<World> m_world;
 
 #if defined(USE_SFML_CLOCK)
     sf::Clock m_clock;

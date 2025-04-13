@@ -13,6 +13,9 @@ const std::string TEXTURE_BOX("box.png");
 const std::string TEXTURE_CRANE("crane.png");
 const std::string TEXTURE_FOREGROUND("foreground.png");
 const std::string TEXTURE_PLAYER("player.png");
+const std::string TEXTURE_DIGITS("digits.png");
+const std::string TEXTURE_FRAME("frame.png");
+const std::string TEXTURE_HOURGLASS("hourglass.png");
 
 }
 
@@ -31,7 +34,10 @@ bool ResourceLoader::load()
         loadTexture(TextureId::Player, TEXTURE_PLAYER) &&
         loadTexture(TextureId::Background, TEXTURE_BACKGROUND) &&
         loadTexture(TextureId::Foreground, TEXTURE_FOREGROUND) &&
-        loadTexture(TextureId::Crane, TEXTURE_CRANE);
+        loadTexture(TextureId::Crane, TEXTURE_CRANE) &&
+        loadTexture(TextureId::Digits, TEXTURE_DIGITS) &&
+        loadTexture(TextureId::Frame, TEXTURE_FRAME) &&
+        loadTexture(TextureId::Hourglass, TEXTURE_HOURGLASS);
     return result;
 }
 

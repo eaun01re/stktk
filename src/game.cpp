@@ -7,34 +7,6 @@
 #include "version/version.h"
 
 
-namespace
-{
-
-Player::Direction directionByKey(sf::Keyboard::Key key)
-{
-    switch (key)
-    {
-    case sf::Keyboard::Key::Left:
-    case sf::Keyboard::Key::A:
-        return Player::Direction::Left;
-    case sf::Keyboard::Key::Right:
-    case sf::Keyboard::Key::D:
-        return Player::Direction::Right;
-    case sf::Keyboard::Key::Up:
-    case sf::Keyboard::Key::W:
-        return Player::Direction::Up;
-    case sf::Keyboard::Key::Q:
-        return Player::Direction::UpLeft;
-    case sf::Keyboard::Key::E:
-        return Player::Direction::UpRight;
-    default:
-        return Player::Direction::None;
-    }
-}
-
-}
-
-
 Game::Game()
     : m_window(
         ProjectName,
@@ -54,15 +26,11 @@ bool Game::init()
     {
         return false;
     }
-    m_world.init();
+
+    m_world.reset(new World());
+    m_world->init();
     return result;
 }
-
-
-// sf::Time Game::elapsed() const
-// {
-//     return m_elapsed;
-// }
 
 
 void Game::restartClock()
@@ -85,7 +53,7 @@ void Game::reset(
     const std::uint8_t cranesQuantity,
     const std::optional<unsigned int> &position)
 {
-    m_world.reset(cranesQuantity, position);
+    m_world->start(cranesQuantity, position);
 }
 
 
@@ -98,23 +66,13 @@ void Game::windowResized(const sf::Vector2u &size)
 
 void Game::keyPressed(const sf::Event::KeyEvent &key)
 {
-    const Player::Direction requestedDirection = directionByKey(key.code);
-    if (requestedDirection == Player::Direction::None)
-    {
-        return;
-    }
-    m_world.requestMovePlayer(requestedDirection);
+    m_world->handleKeyPressed(key.code);
 }
 
 
 void Game::keyReleased(const sf::Event::KeyEvent &key)
 {
-    const Player::Direction requestedDirection = directionByKey(key.code);
-    if (requestedDirection == Player::Direction::None)
-    {
-        return;
-    }
-    m_world.requestStopPlayer();
+    m_world->handleKeyReleased(key.code);
 }
 
 
@@ -124,42 +82,9 @@ const Window& Game::window() const
 }
 
 
-//void Game::handleInput()
-//{
-//    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)
-//        //&& m_snake.GetPhysicalDirection() != Direction::Down
-//        )
-//    {
-//        std::cout << 1 << std::endl;
-////        m_snake.SetDirection(Direction::Up);
-//    }
-//    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)
-//        //&& m_snake.GetPhysicalDirection() != Direction::Up
-//               )
-//    {
-//        std::cout << 2 << std::endl;
-////        m_snake.SetDirection(Direction::Down);
-//    }
-//    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)
-//        //&& m_snake.GetPhysicalDirection() != Direction::Right
-//               )
-//    {
-//        std::cout << 3 << std::endl;
-////        m_snake.SetDirection(Direction::Left);
-//    }
-//    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)
-//        //&& m_snake.GetPhysicalDirection() != Direction::Left
-//               )
-//    {
-//        std::cout << 4 << std::endl;
-////        m_snake.SetDirection(Direction::Right);
-//    }
-//}
-
-
 void Game::update()
 {
-    m_world.update(m_elapsed);
+    m_world->update(m_elapsed);
     m_window.update();
 }
 
@@ -169,7 +94,7 @@ void Game::render()
     // Clear.
     m_window.beginDraw();
 
-    m_world.render(m_window.renderWindow());
+    m_world->render(m_window.renderWindow());
 
     // Display.
     m_window.endDraw();

@@ -9,6 +9,7 @@
 #include "animation.h"
 #include "clock.h"
 #include "consts.h"
+#include "figure.h"
 
 
 namespace
@@ -30,7 +31,8 @@ struct Coordinates
 };
 
 
-class Object
+// TODO: Унаследовать от sf::Sprite?
+class Object : public Figure
 {
 public:
     using Id = unsigned long;
@@ -41,9 +43,11 @@ public:
     virtual ~Object() = default;
 
     virtual void update(const Duration &elapsed);
-    virtual void render(sf::RenderTarget &target, const sf::Transform &transform) const;
-    virtual void init(const sf::Texture &texture);
+    void render(
+        sf::RenderTarget &target,
+        const sf::Transform &transform) const override;
 
+    void setTexture(const sf::Texture &texture);
     Id id() const noexcept;
     void setPosition(const sf::Vector2f &position);
     const sf::Vector2f& position() const noexcept;
@@ -72,7 +76,7 @@ protected:
     const Id m_id;
 
     sf::Sprite m_sprite;
-    sf::Texture m_texture;
+    sf::Texture m_texture; // TODO: Удалить?
 
     std::unique_ptr<Animator> m_animator;
     std::vector<AnimationOriented> m_animationIds;

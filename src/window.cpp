@@ -119,12 +119,6 @@ void Window::resize(const sf::Vector2u &size)
 }
 
 
-void Window::draw(sf::Drawable &l_drawable)
-{
-    m_window.draw(l_drawable);
-}
-
-
 sf::Vector2u Window::windowSize()
 {
     return m_windowSize;

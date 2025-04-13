@@ -43,10 +43,6 @@ public:
 
     void toggleFullscreen();
 
-    void draw(sf::Drawable &l_drawable);
-
-//    void setResizeCallback(ResizeCallback callback);
-
 private:
     void setup(const std::string &title);
     void create();

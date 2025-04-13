@@ -5,7 +5,7 @@
 #include <limits>
 
 #include "math.h"
-#include "objects/object.h"
+#include "resource_loader.h"
 
 
 namespace
@@ -55,9 +55,16 @@ Duration blowDuration()
 }
 
 
-void Box::init(const sf::Texture &texture)
+Box::Box()
 {
-    Object::init(texture);
+    init();
+}
+
+
+void Box::init()
+{
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Box));
 
     m_animator.reset(new Animator(
         m_texture,

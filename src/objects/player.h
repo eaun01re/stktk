@@ -37,10 +37,9 @@ public:
     static unsigned int height();
 
 public:
-    explicit Player() = default;
+    explicit Player();
     virtual ~Player() = default;
 
-    void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     void move(
         Direction direction,
@@ -55,6 +54,7 @@ protected:
     void moveFinished() override;
 
 private:
+    void init();
     void setDirection(Direction direction, bool push);
     Animations animationId(
         const sf::Vector2f &directions,

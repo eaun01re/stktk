@@ -7,10 +7,15 @@
 #include "log.h"
 #include "math.h"
 #include "resource_loader.h"
+#include "objects/hourglass.h"
+#include "objects/number.h"
 
 
 namespace
 {
+
+constexpr sf::Keyboard::Key KEY_PAUSE = sf::Keyboard::Key::Num0;
+constexpr sf::Keyboard::Key KEY_RESTART = sf::Keyboard::Key::Space;
 
 /// Количество ящиков в начале игры.
 constexpr int INITIAL_BOX_QUANTITY = 12;
@@ -31,6 +36,12 @@ const unsigned int GAME_REGION_WIDTH = SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x;
 const unsigned int DROP_BOX_SCORE = 2;
 /// Множитель количества очков, начиляемых за заполнение нижнего ряда.
 const unsigned int BLOW_BOTTOM_ROW_SCORE_MULTIPLIER = 10;
+/// Положение окна, отображающего текущий счёт игры.
+const sf::Vector2f SCORE_POSITION_PAUSED(22, 9);
+/// Положение окна, отображающего итоговый счёт игры.
+const sf::Vector2f SCORE_POSITION_STOPPED(22, 19);
+/// Положение песочных часов, отображаемых во время паузы.
+const sf::Vector2f HOURGLASS_POSITION(40, 27);
 
 sf::Vector2f craneStartPosition(
     bool left,
@@ -43,6 +54,35 @@ sf::Vector2f craneStartPosition(
             : -float(craneWidth) - offset,
         CRANE_VERTICAL_POSITION);
     return position;
+}
+
+Player::Direction directionByKey(sf::Keyboard::Key key)
+{
+    switch (key)
+    {
+    case sf::Keyboard::Key::Left:
+    case sf::Keyboard::Key::A:
+        return Player::Direction::Left;
+    case sf::Keyboard::Key::Right:
+    case sf::Keyboard::Key::D:
+        return Player::Direction::Right;
+    case sf::Keyboard::Key::Up:
+    case sf::Keyboard::Key::W:
+        return Player::Direction::Up;
+    case sf::Keyboard::Key::Q:
+        return Player::Direction::UpLeft;
+    case sf::Keyboard::Key::E:
+        return Player::Direction::UpRight;
+    default:
+        return Player::Direction::None;
+    }
+}
+
+std::shared_ptr<Hourglass> makeHourglass()
+{
+    std::shared_ptr<Hourglass> hourglass = std::make_shared<Hourglass>();
+    hourglass->setPosition(HOURGLASS_POSITION);
+    return hourglass;
 }
 
 }
@@ -58,25 +98,24 @@ void World::init()
 {
     ResourceLoader &resourceLoader = ResourceLoader::instance();
 
-    m_background.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Background));
+    m_background.setTexture(
+        *resourceLoader.texture(ResourceLoader::TextureId::Background));
 
-    m_foreground.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Foreground));
+    m_foreground.setTexture(
+        *resourceLoader.texture(ResourceLoader::TextureId::Foreground));
     m_foreground.setColor(BACKGROUND_COLOR);
-
-    m_player.init(*resourceLoader.texture(ResourceLoader::TextureId::Player));
-
-    m_textureBox = resourceLoader.texture(ResourceLoader::TextureId::Box);
-
-    m_textureCrane = resourceLoader.texture(ResourceLoader::TextureId::Crane);
 }
 
 
-void World::reset(
+void World::start(
     std::uint8_t cranesQuantity,
     const std::optional<unsigned int> &positionIndex)
 {
+    // Удаление старых объектов.
     clearObjects();
+    m_scoreFigures.clear();
 
+    // Инициализация новых объектов.
     Coordinate playerColumn = 0;
     if (positionIndex.has_value() && positionIndex.value() < INITIAL_POSITIONS.size())
     {
@@ -98,41 +137,14 @@ void World::reset(
     addCranes(cranesQuantity);
 
     m_score = 0;
+    m_paused = false;
+    resume();
 }
 
 
 void World::update(const Duration &elapsed)
 {
-    // Обновление игрока.
-    updatePlayer(elapsed);
-
-    // Обновление ящиков.
-    for (auto it = m_boxes.begin(); it != m_boxes.end(); ++it)
-    {
-        BoxPtr &box = it->second;
-        if (updateBox(*box.get(), elapsed))
-        {
-            m_boxes.erase(it);
-        }
-    }
-
-    // Обновление кранов.
-    for (CranePtr &crane : m_cranes)
-    {
-        if (crane != nullptr)
-        {
-            updateCrane(*crane.get(), elapsed);
-        }
-    }
-
-    // Проверка нижнего ряда.
-    if (bottomRowFilled())
-    {
-        if (blowBottomRow())
-        {
-            addCrane();
-        }
-    }
+    m_updater(elapsed);
 }
 
 
@@ -199,8 +211,10 @@ void World::movePlayer(const Player::Direction direction)
 
 void World::render(sf::RenderTarget &target)
 {
+    // Отображение заднего плана.
     target.draw(m_background);
 
+    // Отображение кранов.
     for (const CranePtr &crane : m_cranes)
     {
         if (crane != nullptr)
@@ -209,15 +223,74 @@ void World::render(sf::RenderTarget &target)
         }
     }
 
+    // Отображение ящиков.
     for (const auto &boxInfo : m_boxes)
     {
         const BoxPtr& box = boxInfo.second;
         box->render(target, m_transform);
     }
 
+    // Отображение игрока.
     m_player.render(target, m_transform);
 
+    // Отображение счёта.
+    for (const auto &figure : m_scoreFigures)
+    {
+        figure->render(target, m_transform);
+    }
+
+    // Отображение переднего плана.
     target.draw(m_foreground);
+}
+
+
+void World::handleKeyPressed(sf::Keyboard::Key key)
+{
+    if (!m_player.alive())
+    {
+        if (key == KEY_RESTART)
+        {
+            start(1);
+        }
+        return;
+    }
+
+    if (key == KEY_PAUSE)
+    {
+        togglePause();
+        return;
+    }
+
+    const Player::Direction requestedDirection = directionByKey(key);
+    if (requestedDirection == Player::Direction::None)
+    {
+        return;
+    }
+    requestMovePlayer(requestedDirection);
+}
+
+
+void World::handleKeyReleased(sf::Keyboard::Key key)
+{
+    const Player::Direction requestedDirection = directionByKey(key);
+    if (requestedDirection == Player::Direction::None)
+    {
+        return;
+    }
+    requestStopPlayer();
+}
+
+
+void World::togglePause()
+{
+    m_paused = !m_paused;
+    m_paused ? pause() : resume();
+}
+
+
+unsigned int World::score() const noexcept
+{
+    return m_score;
 }
 
 
@@ -232,6 +305,23 @@ void World::setup()
     // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
     m_transform.translate(BOTTOM_LEFT_CORNER);
     m_transform.scale(sf::Vector2f(1, -1));
+}
+
+
+void World::resume()
+{
+    m_updater = std::bind(&World::updateActive, this, std::placeholders::_1);
+    m_scoreFigures.clear();
+}
+
+
+void World::pause()
+{
+    m_updater = std::bind(&World::updatePaused, this, std::placeholders::_1);
+    NumberPtr number = std::make_shared<Number>(m_score);
+    number->setPosition(SCORE_POSITION_PAUSED);
+    m_scoreFigures.push_back(number);
+    m_scoreFigures.push_back(makeHourglass());
 }
 
 
@@ -310,7 +400,6 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 BoxPtr World::addBox()
 {
     BoxPtr box = std::make_shared<Box>();
-    box->init(*m_textureBox);
     m_boxes.emplace(box->id(), box);
     return box;
 }
@@ -332,7 +421,7 @@ void World::addCranes(std::uint8_t cranesQuantity)
         cranesQuantity,
         std::uint8_t(1),
         MAX_INITIAL_CRANES_QUANTITY);
-    for (std::size_t i = 0; i < cranesQuantity; ++i)
+    for (unsigned int i = 0; i < cranesQuantity; ++i)
     {
         addCrane();
     }
@@ -350,7 +439,7 @@ void World::addCrane()
         return;
     }
 
-    CranePtr crane = makeCrane();
+    CranePtr crane = std::make_shared<Crane>();
     // Первый кран добавляется в начале игры.
     // Он имеет нулевые индекс и смещение.
     unsigned int craneIndex = 0;
@@ -407,14 +496,6 @@ std::size_t World::cranesQuantity() const noexcept
 }
 
 
-CranePtr World::makeCrane() const
-{
-    CranePtr crane = std::make_shared<Crane>();
-    crane->init(*m_textureCrane);
-    return crane;
-}
-
-
 void World::resetCrane(Crane &crane, float offsetLength)
 {
     std::uniform_int_distribution<std::mt19937::result_type> distributionDirection(0, 1);
@@ -444,6 +525,46 @@ void World::setPlayerColumn(Coordinate column)
     const Coordinate row = m_boxesLocations[column].size();
     const sf::Vector2f playerPosition(column * BOX_SIZE, row * BOX_SIZE);
     m_player.setPosition(playerPosition);
+}
+
+
+void World::updateActive(const Duration &elapsed)
+{
+    // Обновление игрока.
+    updatePlayer(elapsed);
+
+    // Обновление ящиков.
+    for (auto it = m_boxes.begin(); it != m_boxes.end(); ++it)
+    {
+        BoxPtr &box = it->second;
+        if (updateBox(*box.get(), elapsed))
+        {
+            m_boxes.erase(it);
+        }
+    }
+
+    // Обновление кранов.
+    for (CranePtr &crane : m_cranes)
+    {
+        if (crane != nullptr)
+        {
+            updateCrane(*crane.get(), elapsed);
+        }
+    }
+
+    // Проверка нижнего ряда.
+    if (bottomRowFilled())
+    {
+        if (blowBottomRow())
+        {
+            addCrane();
+        }
+    }
+}
+
+
+void World::updatePaused(const Duration&)
+{
 }
 
 
@@ -760,7 +881,11 @@ bool World::canDropBox(Object::Id boxId, Coordinate column) const
 void World::dropBox(Crane &crane)
 {
     crane.drop();
-    m_score += DROP_BOX_SCORE;
+    // Очки за сборс начисляются, если игрок жив.
+    if (m_player.alive())
+    {
+        m_score += DROP_BOX_SCORE;
+    }
 }
 
 
@@ -818,6 +943,10 @@ Coordinate World::columnHeight(Coordinate column) const noexcept
 
 void World::stop()
 {
-    m_player.setAlive(false);
     LOG_INFO("Game over. Score: " << m_score << '.');
+    m_player.setAlive(false);
+
+    NumberPtr number = std::make_shared<Number>(m_score);
+    number->setPosition(SCORE_POSITION_STOPPED);
+    m_scoreFigures.push_back(number);
 }

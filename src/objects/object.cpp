@@ -20,7 +20,6 @@ Object::Id Object::m_lastId = NULL_ID;
 Object::Object()
     : m_id(m_lastId++)
 {
-    m_sprite.setPosition(0, 0);
 }
 
 
@@ -41,13 +40,15 @@ void Object::update(const Duration &elapsed)
 }
 
 
-void Object::render(sf::RenderTarget &target, const sf::Transform &transform) const
+void Object::render(
+    sf::RenderTarget &target,
+    const sf::Transform &transform) const
 {
     target.draw(m_sprite, transform);
 }
 
 
-void Object::init(const sf::Texture &texture)
+void Object::setTexture(const sf::Texture &texture)
 {
     m_texture = texture;
     m_sprite.setTexture(m_texture);

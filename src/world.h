@@ -2,6 +2,7 @@
 
 
 #include <array>
+#include <functional>
 #include <list>
 #include <optional>
 #include <random>
@@ -29,7 +30,7 @@ class World final
 public:
     explicit World();
     void init();
-    void reset(
+    void start(
         std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
     void update(const Duration &elapsed);
@@ -37,9 +38,15 @@ public:
     void requestStopPlayer();
     void movePlayer(const Player::Direction direction);
     void render(sf::RenderTarget &target);
+    void handleKeyPressed(sf::Keyboard::Key key);
+    void handleKeyReleased(sf::Keyboard::Key key);
+    void togglePause();
+    unsigned int score() const noexcept;
 
 private:
     void setup();
+    void resume();
+    void pause();
     void clearObjects();
     /*!
      * Случайным образом расставляет ящики и определяет положение игрока.
@@ -93,10 +100,11 @@ private:
      */
     void addCrane();
     std::size_t cranesQuantity() const noexcept;
-    CranePtr makeCrane() const;
     void resetCrane(Crane &crane, float offsetLength = 0);
     void loadCrane(Crane &crane);
     void setPlayerColumn(Coordinate column);
+    void updateActive(const Duration &elapsed);
+    void updatePaused(const Duration &elapsed);
     bool canPlayerMove(
         const std::optional<Coordinate> &playerRow,
         const std::optional<Coordinate> &playerColumn,
@@ -146,15 +154,15 @@ private:
     void stop();
 
 private:
+    std::function<void(const Duration&)> m_updater;
+
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
     std::map<Object::Id, BoxPtr> m_boxes;
     std::array<std::list<Object::Id>, BOXES_COLUMNS> m_boxesLocations;
-    std::shared_ptr<const sf::Texture> m_textureBox;
 
     std::array<CranePtr, MAX_CRANES_QUANTITY> m_cranes;
-    std::shared_ptr<const sf::Texture> m_textureCrane;
 
     sf::Sprite m_background;
     sf::Sprite m_foreground;
@@ -163,6 +171,10 @@ private:
 
     /// Количество заработанных очков.
     unsigned int m_score{ 0 };
+    /// Графические примитивы, используемые для отображения очков.
+    std::vector<FigurePtr> m_scoreFigures;
+
+    bool m_paused{ true };
 
     mutable std::mt19937 m_randomEngine;
 };

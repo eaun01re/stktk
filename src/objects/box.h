@@ -31,16 +31,18 @@ public:
     };
 
 public:
-    explicit Box() = default;
+    explicit Box();
     virtual ~Box() = default;
 
-    void init(const sf::Texture &texture) override;
     void update(const Duration &elapsed) override;
     void move(Direction direction);
     Direction direction() const noexcept;
     void blow();
     bool isBlowing() const noexcept;
     bool isBlowed() const noexcept;
+
+private:
+    void init();
 
 private:
     Direction m_direction{ Direction::None };
