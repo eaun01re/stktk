@@ -9,7 +9,6 @@
 #include "animation.h"
 #include "clock.h"
 #include "consts.h"
-#include "figure.h"
 
 
 namespace
@@ -31,8 +30,7 @@ struct Coordinates
 };
 
 
-// TODO: Унаследовать от sf::Sprite?
-class Object : public Figure
+class Object : public sf::Sprite
 {
 public:
     using Id = unsigned long;
@@ -43,14 +41,8 @@ public:
     virtual ~Object() = default;
 
     virtual void update(const Duration &elapsed);
-    void render(
-        sf::RenderTarget &target,
-        const sf::Transform &transform) const override;
 
-    void setTexture(const sf::Texture &texture);
     Id id() const noexcept;
-    void setPosition(const sf::Vector2f &position);
-    const sf::Vector2f& position() const noexcept;
     const sf::Vector2f& speed() const noexcept;
     bool isFalling() const noexcept;
     bool isMoving() const;
@@ -65,8 +57,8 @@ public:
      * \param[in] vertical Выполнять нормализацию по вертикали.
      */
     void normalizePosition(bool horizontal, bool vertical);
-    void setAnimationId(const AnimationOriented &animation);
-    void setAnimationIds(const std::vector<AnimationOriented> &ids);
+    void setAnimation(const AnimationOriented &animation);
+    void setAnimationSequence(const std::vector<AnimationOriented> &ids);
 
 protected:
     void move(const Duration &elapsed);
@@ -74,9 +66,6 @@ protected:
 
 protected:
     const Id m_id;
-
-    sf::Sprite m_sprite;
-    sf::Texture m_texture; // TODO: Удалить?
 
     std::unique_ptr<Animator> m_animator;
     std::vector<AnimationOriented> m_animationIds;

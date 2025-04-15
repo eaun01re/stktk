@@ -21,13 +21,6 @@ const sf::Vector2f BOX_OFFSET(4, -3);
 class Crane final : public Object
 {
 public:
-    enum State : AnimationId
-    {
-        Holding,
-        Open
-    };
-
-public:
     explicit Crane();
     virtual ~Crane() = default;
 

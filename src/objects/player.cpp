@@ -15,41 +15,20 @@ namespace
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
 const sf::Vector2u TEXTURE_SIZE(5, 3);
 
-const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
+const TextureSpriteIndices ANIMATION_IDLE
 {
-    {
-        Player::Animations::Idle,
-        TextureSpriteIndices
-        {
-            { 0, 0, false },
-            { 0, 1, false },
-            { 0, 2, false },
-            { 0, 0, false },
-            { 0, 1, false },
-            { 0, 2, true }
-        }
-    },
-    {
-        Player::Animations::Walk,
-        TextureSpriteIndices{ { 1, 0 }, { 1, 1 }, { 1, 2 } }
-    },
-    {
-        Player::Animations::Push,
-        TextureSpriteIndices{ { 2, 0 }, { 2, 1 }, { 2, 2 } }
-    },
-    {
-        Player::Animations::Jump,
-        TextureSpriteIndices{ { 3, 0 } }
-    },
-    {
-        Player::Animations::Dying,
-        TextureSpriteIndices{ { 4, 0 } }
-    },
-    {
-        Player::Animations::Dead,
-        TextureSpriteIndices{ { 4, 1 }, { 4, 2 } }
-    },
+    { 0, 0, false },
+    { 0, 1, false },
+    { 0, 2, false },
+    { 0, 0, false },
+    { 0, 1, false },
+    { 0, 2, true }
 };
+const TextureSpriteIndices ANIMATION_WALK{ { 1, 0 }, { 1, 1 }, { 1, 2 } };
+const TextureSpriteIndices ANIMATION_PUSH{ { 2, 0 }, { 2, 1 }, { 2, 2 } };
+const TextureSpriteIndices ANIMATION_JUMP{ { 3, 0 } };
+const TextureSpriteIndices ANIMATION_DYING{ { 4, 0 } };
+const TextureSpriteIndices ANIMATION_DEAD{ { 4, 1 }, { 4, 2 } };
 
 }
 
@@ -70,13 +49,10 @@ void Player::init()
     ResourceLoader &resourceLoader = ResourceLoader::instance();
     setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Player));
 
-    m_animator.reset(new Animator(
-        m_texture,
-        TEXTURE_SIZE,
-        ANIMATIONS));
-    setAnimationId(AnimationOriented(Animations::Idle));
-    m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
-    m_sprite.setColor(BACKGROUND_COLOR);
+    m_animator.reset(new Animator(*getTexture(), TEXTURE_SIZE));
+    setAnimation(AnimationOriented(&ANIMATION_IDLE));
+    setTextureRect(mirrorVertical(m_animator->rect()));
+    setColor(BACKGROUND_COLOR);
 }
 
 
@@ -86,7 +62,7 @@ void Player::update(const Duration &elapsed)
 
     if (!isMoving())
     {
-        m_lookLeft = m_animator->currentSpriteIndex() < ANIMATIONS.at(Animations::Idle).size() / 2;
+        m_lookLeft = m_animator->currentSpriteIndex() < ANIMATION_IDLE.size() / 2;
     }
 
     Object::move(elapsed);
@@ -108,7 +84,7 @@ Player::Direction Player::direction() const noexcept
 
 void Player::stop()
 {
-    setAnimationId(AnimationOriented(Animations::Idle));
+    setAnimation(AnimationOriented(&ANIMATION_IDLE));
 }
 
 
@@ -134,8 +110,8 @@ void Player::setAlive(bool alive)
 
     m_animator->setAnimationSequence(
         {
-            AnimationOriented(Animations::Dying),
-            AnimationOriented(Animations::Dead, left)
+            AnimationOriented(&ANIMATION_DYING),
+            AnimationOriented(&ANIMATION_DEAD, left)
         });
 }
 
@@ -186,23 +162,23 @@ void Player::setDirection(Direction direction, bool push)
     m_movementLength.y = direction != Direction::Down
         ? BOX_SIZE * directions.y
         : -std::numeric_limits<float>::infinity();
-    setAnimationId(AnimationOriented(
-        animationId(directions, push),
+    setAnimation(AnimationOriented(
+        &animationByDirection(directions, push),
         !m_lookLeft));
 }
 
 
-Player::Animations Player::animationId(
+const TextureSpriteIndices &Player::animationByDirection(
     const sf::Vector2f &directions,
     bool push) const noexcept
 {
     if (!m_alive)
     {
-        return Player::Animations::Dead;
+        return ANIMATION_DEAD;
     }
     if (directions.y != 0)
     {
-        return Player::Animations::Jump;
+        return ANIMATION_JUMP;
     }
-    return push ? Animations::Push : Animations::Walk;
+    return push ? ANIMATION_PUSH : ANIMATION_WALK;
 }

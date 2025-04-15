@@ -12,6 +12,7 @@
 #include "objects/box.h"
 #include "objects/crane.h"
 #include "objects/player.h"
+#include "objects/figure.h"
 
 
 namespace

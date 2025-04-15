@@ -3,13 +3,10 @@
 
 Animator::Animator(
     const sf::Texture &texture,
-    const sf::Vector2u &spritesQuantity,
-    const AnimationMap &animations)
-    : m_animations(animations)
+    const sf::Vector2u &spritesQuantity)
 {
     m_currentRect.width = texture.getSize().x / float(spritesQuantity.y);
     m_currentRect.height = texture.getSize().y / float(spritesQuantity.x);
-    m_currentSpritesIndices = m_animations.cbegin();
 }
 
 
@@ -30,7 +27,7 @@ void Animator::setAnimationSequence(
     m_currentAnimationSequence = sequence;
     if (!m_currentAnimationSequence.empty())
     {
-        applyAnimationId(m_currentAnimationSequence[0]);
+        setAnimationIndex(0);
     }
 }
 
@@ -47,16 +44,9 @@ const sf::IntRect& Animator::rect() const noexcept
 }
 
 
-void Animator::applyAnimationId(const AnimationOriented &animation)
+void Animator::setAnimationIndex(const std::size_t index)
 {
-    const auto it = m_animations.find(animation.id);
-    if (it == m_animations.cend())
-    {
-        return;
-    }
-
-    m_currentSpritesIndices = it;
-    m_currentAnimationIndex = 0;
+    m_currentAnimationIndex = index;
     m_currentSpriteIndex = 0;
     // Принудительное обновление анимации после смены спрайтов.
     m_forceUpdate = true;
@@ -70,14 +60,14 @@ void Animator::applyNextAnimation()
         return;
     }
 
-    ++m_currentAnimationIndex;
-    applyAnimationId(m_currentAnimationSequence[m_currentAnimationIndex]);
+    setAnimationIndex(m_currentAnimationIndex + 1);
 }
 
 
 bool Animator::update(const Duration &elapsed)
 {
-    const TextureSpriteIndices &spritesIndices = m_currentSpritesIndices->second;
+    const TextureSpriteIndices &spritesIndices =
+        *m_currentAnimationSequence[m_currentAnimationIndex].indices;
 
     if (!m_forceUpdate)
     {

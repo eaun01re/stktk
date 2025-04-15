@@ -23,16 +23,6 @@ public:
         DownRight = Down | Right
     };
 
-    enum Animations : AnimationId
-    {
-        Idle,
-        Walk,
-        Push,
-        Jump,
-        Dying,
-        Dead
-    };
-
 public:
     static unsigned int height();
 
@@ -56,7 +46,7 @@ protected:
 private:
     void init();
     void setDirection(Direction direction, bool push);
-    Animations animationId(
+    const TextureSpriteIndices& animationByDirection(
         const sf::Vector2f &directions,
         bool push) const noexcept;
 

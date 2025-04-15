@@ -24,7 +24,8 @@ Object::Object()
 
 
 Object::Object(const Object &object)
-    : m_id(object.m_id)
+    : sf::Sprite()
+    , m_id(object.m_id)
 {
 }
 
@@ -35,41 +36,14 @@ void Object::update(const Duration &elapsed)
     {
         // Если анимация обновила текстуру,
         // то спрайту назначается обновлённое значение.
-        m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
+        setTextureRect(mirrorVertical(m_animator->rect()));
     }
-}
-
-
-void Object::render(
-    sf::RenderTarget &target,
-    const sf::Transform &transform) const
-{
-    target.draw(m_sprite, transform);
-}
-
-
-void Object::setTexture(const sf::Texture &texture)
-{
-    m_texture = texture;
-    m_sprite.setTexture(m_texture);
 }
 
 
 Object::Id Object::id() const noexcept
 {
     return m_id;
-}
-
-
-void Object::setPosition(const sf::Vector2f &position)
-{
-    m_sprite.setPosition(position);
-}
-
-
-const sf::Vector2f& Object::position() const noexcept
-{
-    return m_sprite.getPosition();
 }
 
 
@@ -110,8 +84,8 @@ Coordinates Object::coordinates() const
 
 std::optional<Coordinate> Object::column() const
 {
-    const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), true, false);
-    if (std::abs(normalizedPosition.x - position().x) >= COORDINATE_TOLERANCE)
+    const sf::Vector2f normalizedPosition = ::normalizedPosition(getPosition(), true, false);
+    if (std::abs(normalizedPosition.x - getPosition().x) >= COORDINATE_TOLERANCE)
     {
         return std::nullopt;
     }
@@ -126,8 +100,8 @@ std::optional<Coordinate> Object::column() const
 
 std::optional<Coordinate> Object::row() const
 {
-    const sf::Vector2f normalizedPosition = ::normalizedPosition(position(), false, true);
-    if (std::abs(normalizedPosition.y - position().y) >= COORDINATE_TOLERANCE)
+    const sf::Vector2f normalizedPosition = ::normalizedPosition(getPosition(), false, true);
+    if (std::abs(normalizedPosition.y - getPosition().y) >= COORDINATE_TOLERANCE)
     {
         return std::nullopt;
     }
@@ -142,18 +116,18 @@ std::optional<Coordinate> Object::row() const
 
 void Object::normalizePosition(bool horizontal, bool vertical)
 {
-    const sf::Vector2f newPosition = normalizedPosition(position(), horizontal, vertical);
-    m_sprite.setPosition(newPosition);
+    const sf::Vector2f newPosition = normalizedPosition(getPosition(), horizontal, vertical);
+    setPosition(newPosition);
 }
 
 
-void Object::setAnimationId(const AnimationOriented &animation)
+void Object::setAnimation(const AnimationOriented &animation)
 {
-    setAnimationIds({ animation });
+    setAnimationSequence({ animation });
 }
 
 
-void Object::setAnimationIds(const std::vector<AnimationOriented> &ids)
+void Object::setAnimationSequence(const std::vector<AnimationOriented> &ids)
 {
     m_currentAnimationId = 0;
     m_animationIds = ids;
@@ -175,14 +149,14 @@ void Object::move(const Duration &elapsed)
         (m_movementLength.y != 0 &&
          std::isless(m_movementLength.y, 0.0f) == std::isless(m_movementLength.y - offset.y, 0.0f)))
     {
-        m_sprite.move(offset.x, offset.y);
+        sf::Sprite::move(offset.x, offset.y);
         m_movementLength.x -= offset.x;
         m_movementLength.y -= offset.y;
     }
     else
     {
         offset = m_movementLength;
-        m_sprite.move(offset.x, offset.y);
+        sf::Sprite::move(offset.x, offset.y);
         moveFinished();
     }
 }

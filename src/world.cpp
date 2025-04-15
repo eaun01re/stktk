@@ -135,7 +135,6 @@ void World::start(
     m_player.setAlive(true);
 
     addCranes(cranesQuantity);
-
     m_score = 0;
     m_paused = false;
     resume();
@@ -219,7 +218,7 @@ void World::render(sf::RenderTarget &target)
     {
         if (crane != nullptr)
         {
-            crane->render(target, m_transform);
+            target.draw(*crane, m_transform);
         }
     }
 
@@ -227,11 +226,11 @@ void World::render(sf::RenderTarget &target)
     for (const auto &boxInfo : m_boxes)
     {
         const BoxPtr& box = boxInfo.second;
-        box->render(target, m_transform);
+        target.draw(*box, m_transform);
     }
 
     // Отображение игрока.
-    m_player.render(target, m_transform);
+    target.draw(m_player, m_transform);
 
     // Отображение счёта.
     for (const auto &figure : m_scoreFigures)
@@ -431,8 +430,6 @@ void World::addCranes(std::uint8_t cranesQuantity)
 void World::addCrane()
 {
     const std::size_t cranesQuantity = this->cranesQuantity();
-    m_score += cranesQuantity * BLOW_BOTTOM_ROW_SCORE_MULTIPLIER;
-
     if (cranesQuantity >= MAX_CRANES_QUANTITY)
     {
         // Достигнуто максимальное количество кранов.
@@ -453,7 +450,7 @@ void World::addCrane()
             firstCrane->width(),
             0);
         const float firstCraneOffset =
-            std::abs(firstCrane->position().x - craneStartPosition.x);
+            std::abs(firstCrane->getPosition().x - craneStartPosition.x);
         float offset = 0;
         for (unsigned int i = 1; i < m_cranes.size(); ++i)
         {
@@ -516,7 +513,7 @@ void World::resetCrane(Crane &crane, float offsetLength)
         crane.load(box->id());
     }
     BoxPtr &box = m_boxes[crane.boxId()];
-    box->setPosition(sum(crane.position(), BOX_OFFSET));
+    box->setPosition(sum(crane.getPosition(), BOX_OFFSET));
 }
 
 
@@ -693,7 +690,7 @@ void World::updatePlayer(const Duration &elapsed)
         m_player.stop();
     }
 
-    const float playerHeight = m_player.position().y;
+    const float playerHeight = m_player.getPosition().y;
     const float columnHeight =
         float(m_boxesLocations[playerColumn.value()].size()) * BOX_SIZE;
     if (playerHeight > columnHeight)
@@ -724,7 +721,7 @@ bool World::updateBox(Box &box, const Duration &elapsed)
 
     if (box.isBlowed())
     {
-        return box.position().y > 0;
+        return box.getPosition().y > 0;
     }
 
     const std::optional<Coordinate> boxColumn = box.column();
@@ -734,7 +731,7 @@ bool World::updateBox(Box &box, const Duration &elapsed)
     }
 
     const Coordinate column = boxColumn.value();
-    const float boxHeight = box.position().y;
+    const float boxHeight = box.getPosition().y;
 
     if (boxHitsPlayer(box))
     {
@@ -832,8 +829,8 @@ void World::startMoveBox(
 
 bool World::boxHitsPlayer(const Box &box) const noexcept
 {
-    const sf::Vector2f &playerPosition = m_player.position();
-    const sf::Vector2f &boxPosition = box.position();
+    const sf::Vector2f &playerPosition = m_player.getPosition();
+    const sf::Vector2f &boxPosition = box.getPosition();
     const float heightRange = boxPosition.y - playerPosition.y;
     const bool result =
         std::abs(playerPosition.x - boxPosition.x) < BOX_SIZE / 2 &&
@@ -868,7 +865,7 @@ bool World::canDropBox(Object::Id boxId, Coordinate column) const
         const BoxPtr &box = boxInfo.second;
         if (box->column() == column &&
             box->id() != boxId &&
-            std::abs(boxDropAltitude - box->position().y) < BOX_SIZE)
+            std::abs(boxDropAltitude - box->getPosition().y) < BOX_SIZE)
         {
             return false;
         }
@@ -904,6 +901,7 @@ bool World::bottomRowFilled() const
 
 bool World::blowBottomRow()
 {
+    bool addScore = false;
     bool rowBlowed = true;
     for (auto &column : m_boxesLocations)
     {
@@ -911,7 +909,7 @@ bool World::blowBottomRow()
         BoxPtr &box = m_boxes[bottomBoxId];
         if (!box->isBlowed())
         {
-            box->blow();
+            addScore |= box->blow();
             rowBlowed = false;
         }
         else
@@ -919,6 +917,11 @@ bool World::blowBottomRow()
             m_boxes.erase(bottomBoxId);
             column.pop_front();
         }
+    }
+    if (addScore)
+    {
+        const std::size_t cranesQuantity = this->cranesQuantity();
+        m_score += cranesQuantity * BLOW_BOTTOM_ROW_SCORE_MULTIPLIER;
     }
     return rowBlowed;
 }

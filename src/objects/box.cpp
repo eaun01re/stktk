@@ -17,39 +17,36 @@ const Duration ANIMATION_INTERVAL = ANIMATION_INTERVAL_DEFAULT;
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
 const sf::Vector2u TEXTURE_SIZE(1, 11);
 
-const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
+const std::vector<TextureSpriteIndices> ANIMATIONS_REST
 {
-    { Box::Animations::Rest0, TextureSpriteIndices{ { 0, 0 } } },
-    { Box::Animations::Rest1, TextureSpriteIndices{ { 0, 1 } } },
-    { Box::Animations::Rest2, TextureSpriteIndices{ { 0, 2 } } },
-    { Box::Animations::Rest3, TextureSpriteIndices{ { 0, 3 } } },
-    { Box::Animations::Rest4, TextureSpriteIndices{ { 0, 4 } } },
-    { Box::Animations::Rest5, TextureSpriteIndices{ { 0, 5 } } },
-    { Box::Animations::Rest6, TextureSpriteIndices{ { 0, 6 } } },
-    { Box::Animations::Rest7, TextureSpriteIndices{ { 0, 7 } } },
-    {
-        Box::Animations::Blow,
-        TextureSpriteIndices
-        {
-            { 0, 8, false, ANIMATION_INTERVAL },
-            { 0, 9, false, ANIMATION_INTERVAL },
-            { 0, 10, false, ANIMATION_INTERVAL }
-        }
-    }
+    { { 0, 0 } },
+    { { 0, 1 } },
+    { { 0, 2 } },
+    { { 0, 3 } },
+    { { 0, 4 } },
+    { { 0, 5 } },
+    { { 0, 6 } },
+    { { 0, 7 } }
+};
+const TextureSpriteIndices ANIMATION_BLOW
+{
+    { 0, 8, false, ANIMATION_INTERVAL },
+    { 0, 9, false, ANIMATION_INTERVAL },
+    { 0, 10, false, ANIMATION_INTERVAL }
 };
 
-Box::Animations randomRestStyle()
+TextureSpriteIndicesPtr randomRestStyle()
 {
     static std::mt19937 randomEngine;
     static std::uniform_int_distribution<std::mt19937::result_type> distributionBoxStyle(
-        Box::Animations::Rest0,
-        Box::Animations::Rest7);
-    return Box::Animations(distributionBoxStyle(randomEngine));
+        0,
+        ANIMATIONS_REST.size() - 1);
+    return &ANIMATIONS_REST.at(distributionBoxStyle(randomEngine));
 }
 
 Duration blowDuration()
 {
-    return (ANIMATIONS.at(Box::Animations::Blow).size()) * ANIMATION_INTERVAL;
+    return ANIMATION_BLOW.size() * ANIMATION_INTERVAL;
 }
 
 }
@@ -66,13 +63,10 @@ void Box::init()
     ResourceLoader &resourceLoader = ResourceLoader::instance();
     setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Box));
 
-    m_animator.reset(new Animator(
-        m_texture,
-        TEXTURE_SIZE,
-        ANIMATIONS));
-    setAnimationId(AnimationOriented(randomRestStyle()));
-    m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
-    m_sprite.setColor(BACKGROUND_COLOR);
+    m_animator.reset(new Animator(*getTexture(), TEXTURE_SIZE));
+    setAnimation(AnimationOriented(randomRestStyle()));
+    setTextureRect(mirrorVertical(m_animator->rect()));
+    setColor(BACKGROUND_COLOR);
 }
 
 
@@ -118,16 +112,17 @@ Box::Direction Box::direction() const noexcept
 }
 
 
-void Box::blow()
+bool Box::blow()
 {
     if (m_blowDuration.has_value())
     {
-        return;
+        return false;
     }
 
     m_blowDuration = Duration();
     m_speed = sf::Vector2f();
-    setAnimationId(AnimationOriented(Box::Animations::Blow));
+    setAnimation(AnimationOriented(&ANIMATION_BLOW));
+    return true;
 }
 
 

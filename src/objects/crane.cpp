@@ -16,11 +16,8 @@ const sf::Vector2u TEXTURE_SIZE(1, 2);
 /// Скорость движения крана, пиксели в секунду.
 constexpr float CRANE_SPEED = SPEED;
 
-const std::map<AnimationId, TextureSpriteIndices> ANIMATIONS
-{
-    { Crane::State::Holding, TextureSpriteIndices{ { 0, 0 } } },
-    { Crane::State::Open, TextureSpriteIndices{ { 0, 1 } } }
-};
+const TextureSpriteIndices ANIMATION_HOLDING{ { 0, 0 } };
+const TextureSpriteIndices ANIMATION_OPEN{ { 0, 1 } };
 
 }
 
@@ -36,13 +33,9 @@ void Crane::init()
     ResourceLoader &resourceLoader = ResourceLoader::instance();
     setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Crane));
 
-    m_animator.reset(new Animator(
-        m_texture,
-        TEXTURE_SIZE,
-        ANIMATIONS));
-    setAnimationId(AnimationOriented(State::Holding));
-    m_sprite.setTextureRect(mirrorVertical(m_animator->rect()));
-    m_sprite.setColor(BACKGROUND_COLOR);
+    m_animator.reset(new Animator(*getTexture(), TEXTURE_SIZE));
+    setTextureRect(mirrorVertical(m_animator->rect()));
+    setColor(BACKGROUND_COLOR);
 }
 
 
@@ -63,7 +56,7 @@ void Crane::reset(const sf::Vector2f &position, bool left, float movementLength)
 {
     setPosition(position);
     setDirection(left, movementLength);
-    setAnimationId(AnimationOriented(State::Holding));
+    setAnimation(AnimationOriented(&ANIMATION_HOLDING));
     m_readyToReset = false;
 }
 
@@ -124,8 +117,8 @@ void Crane::drop()
     m_boxId = NULL_ID;
     m_animator->setAnimationSequence(
     {
-        AnimationOriented(State::Open),
-        AnimationOriented(State::Holding)
+        AnimationOriented(&ANIMATION_OPEN),
+        AnimationOriented(&ANIMATION_HOLDING)
     });
 }
 

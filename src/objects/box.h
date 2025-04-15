@@ -17,19 +17,6 @@ public:
         Down
     };
 
-    enum Animations : AnimationId
-    {
-        Rest0,
-        Rest1,
-        Rest2,
-        Rest3,
-        Rest4,
-        Rest5,
-        Rest6,
-        Rest7,
-        Blow,
-    };
-
 public:
     explicit Box();
     virtual ~Box() = default;
@@ -37,7 +24,7 @@ public:
     void update(const Duration &elapsed) override;
     void move(Direction direction);
     Direction direction() const noexcept;
-    void blow();
+    bool blow();
     bool isBlowing() const noexcept;
     bool isBlowed() const noexcept;
 
