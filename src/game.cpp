@@ -15,6 +15,8 @@ Game::Game()
         std::bind(&Game::keyReleased, this, std::placeholders::_1))
 {
     restartClock();
+    m_maskLeft.setFillColor(BACKGROUND_COLOR);
+    m_maskRight.setFillColor(BACKGROUND_COLOR);
 }
 
 
@@ -61,6 +63,14 @@ void Game::windowResized(const sf::Vector2u &size)
 {
     LOG_DEBUG("Window is resized to " << size.x << 'x' << size.y << '.');
     m_window.resize(size);
+
+    // Обновление обрезающей области.
+    const sf::Vector2f &viewSize = m_window.viewSize();
+    const sf::Vector2f maskSize((viewSize.x - SCREEN_SIZE.x) / 2, viewSize.y);
+    m_maskLeft.setSize(maskSize);
+    m_maskRight.setSize(maskSize);
+    m_maskLeft.setPosition(-maskSize.x, 0);
+    m_maskRight.setPosition(SCREEN_SIZE.x, 0);
 }
 
 
@@ -94,8 +104,17 @@ void Game::render()
     // Clear.
     m_window.beginDraw();
 
-    m_world->render(m_window.renderWindow());
+    sf::RenderWindow& target = m_window.renderWindow();
+    m_world->render(target);
+    renderClippingMask(target);
 
     // Display.
     m_window.endDraw();
+}
+
+
+void Game::renderClippingMask(sf::RenderTarget &target)
+{
+    target.draw(m_maskLeft);
+    target.draw(m_maskRight);
 }

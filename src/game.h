@@ -26,11 +26,19 @@ private:
     void windowResized(const sf::Vector2u &size);
     void keyPressed(const sf::Event::KeyEvent &key);
     void keyReleased(const sf::Event::KeyEvent &key);
+    void renderClippingMask(sf::RenderTarget &target);
 
 private:
     Window m_window;
 
     std::unique_ptr<World> m_world;
+
+    /// Маска из двух прямоугольников по бокам, прикрывающая объекты,
+    /// выходящие за пределывиртуального экрана.
+    /// FIXME: использовать готовое решение в SFML 3:
+    /// https://github.com/SFML/SFML/pull/1451
+    sf::RectangleShape m_maskLeft;
+    sf::RectangleShape m_maskRight;
 
 #if defined(USE_SFML_CLOCK)
     sf::Clock m_clock;

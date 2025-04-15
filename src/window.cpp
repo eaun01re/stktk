@@ -119,9 +119,15 @@ void Window::resize(const sf::Vector2u &size)
 }
 
 
-sf::Vector2u Window::windowSize()
+sf::Vector2u Window::windowSize() const noexcept
 {
     return m_windowSize;
+}
+
+
+const sf::Vector2f& Window::viewSize() const noexcept
+{
+    return m_view.getSize();
 }
 
 

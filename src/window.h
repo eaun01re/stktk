@@ -39,7 +39,8 @@ public:
     sf::RenderWindow& renderWindow() noexcept;
 
     void resize(const sf::Vector2u &size);
-    sf::Vector2u windowSize();
+    sf::Vector2u windowSize() const noexcept;
+    const sf::Vector2f& viewSize() const noexcept;
 
     void toggleFullscreen();
 
