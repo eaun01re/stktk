@@ -1,4 +1,5 @@
 #include "animation.h"
+#include "log.h"
 
 
 Animator::Animator(
@@ -66,8 +67,14 @@ void Animator::applyNextAnimation()
 
 bool Animator::update(const Duration &elapsed)
 {
-    const TextureSpriteIndices &spritesIndices =
-        *m_currentAnimationSequence[m_currentAnimationIndex].indices;
+    const TextureSpriteIndicesPtr indicesPtr =
+        m_currentAnimationSequence[m_currentAnimationIndex].indices;
+    if (indicesPtr == nullptr)
+    {
+        LOG_WARNING("Null texture sprite indices.");
+        return false;
+    }
+    const TextureSpriteIndices &spritesIndices = *indicesPtr;
 
     if (!m_forceUpdate)
     {
@@ -78,12 +85,12 @@ bool Animator::update(const Duration &elapsed)
 
         const Duration &swtichTime =
             spritesIndices.at(m_currentSpriteIndex).duration;
-        m_totalTime += elapsed;
-        if (m_totalTime < swtichTime)
+        m_currentSpriteTime += elapsed;
+        if (m_currentSpriteTime < swtichTime)
         {
             return false;
         }
-        m_totalTime -= swtichTime;
+        m_currentSpriteTime -= swtichTime;
 
         ++m_currentSpriteIndex;
     }

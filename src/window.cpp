@@ -113,7 +113,6 @@ void Window::resize(const sf::Vector2u &size)
         // Высота больше.
         viewSize.y = size.y * SCREEN_SIZE.y / (size.x / ASPECT_RATIO);
     }
-    // FIXME: Выполнить обрезание игровой области, чтобы скрыть краны.
     m_view.setSize(viewSize.x, viewSize.y);
     m_window.setView(m_view);
 }

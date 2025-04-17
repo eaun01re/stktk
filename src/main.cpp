@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
     game.reset(3, position);
     while (!game.window().isDone())
     {
-//        game.handleInput();
         game.restartClock();
         game.update();
         game.render();

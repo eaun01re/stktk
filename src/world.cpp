@@ -175,20 +175,20 @@ void World::movePlayer(const Player::Direction direction)
     switch (direction)
     {
     case Player::Direction::Left:
-        if (playerCoordinates.row.value() == m_boxesLocations[playerCoordinates.column.value() - 1].size() - 1)
+        if (playerCoordinates.row.value() == columnHeight(playerCoordinates.column.value() - 1) - 1)
         {
             push = true;
-            startMoveBox(
+            pushBox(
                 playerCoordinates.row.value(),
                 playerCoordinates.column.value() - 1,
                 Box::Direction::Left);
         }
         break;
     case Player::Direction::Right:
-        if (playerCoordinates.row.value() == m_boxesLocations[playerCoordinates.column.value() + 1].size() - 1)
+        if (playerCoordinates.row.value() == columnHeight(playerCoordinates.column.value() + 1) - 1)
         {
             push = true;
-            startMoveBox(
+            pushBox(
                 playerCoordinates.row.value(),
                 playerCoordinates.column.value() + 1,
                 Box::Direction::Right);
@@ -210,22 +210,33 @@ void World::movePlayer(const Player::Direction direction)
 
 void World::render(sf::RenderTarget &target)
 {
-    // Отображение заднего плана.
     target.draw(m_background);
 
-    // Отображение кранов.
+    // Отображение кранов и их ящиков.
     for (const CranePtr &crane : m_cranes)
     {
         if (crane != nullptr)
         {
-            target.draw(*crane, m_transform);
+            renderCrane(*crane, target);
         }
     }
 
-    // Отображение ящиков.
-    for (const auto &boxInfo : m_boxes)
+    // Отображение свободных ящиков.
+    for (auto &column : m_boxesStatic)
     {
-        const BoxPtr& box = boxInfo.second;
+        for (const Object::Id boxId : column)
+        {
+            if (boxId == NULL_ID)
+            {
+                break;
+            }
+            const BoxPtr &box = m_boxes.at(boxId);
+            target.draw(*box, m_transform);
+        }
+    }
+    for (const Object::Id boxId : m_boxesMoving)
+    {
+        const BoxPtr &box = m_boxes.at(boxId);
         target.draw(*box, m_transform);
     }
 
@@ -326,16 +337,22 @@ void World::pause()
 
 void World::clearObjects()
 {
-    for (auto &column : m_boxesLocations)
-    {
-        column.clear();
-    }
     m_boxes.clear();
 
     for (auto &crane : m_cranes)
     {
         crane.reset();
     }
+
+    // Удаление индексов.
+    for (auto &column : m_boxesStatic)
+    {
+        for (auto &boxId : column)
+        {
+            boxId = NULL_ID;
+        }
+    }
+    m_boxesMoving.clear();
 }
 
 
@@ -343,7 +360,7 @@ void World::generateRandomPosition()
 {
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
-        m_boxesLocations.size() - 1);
+        m_boxesStatic.size() - 1);
 
     // Расстановка ящиков.
     std::set<Coordinate> columnsUsed;
@@ -356,14 +373,14 @@ void World::generateRandomPosition()
         }
         while (
             // Проверка не превышен ли лимит высоты стопки:
-            (m_boxesLocations[column].size() >= MAX_BOXES_IN_COLUMN) ||
+            (columnHeight(column) >= MAX_BOXES_IN_COLUMN) ||
             // Проверка не формирует ли последний ящик полный ряд:
             (i == INITIAL_BOX_QUANTITY - 1 &&
              columnsUsed.size() == BOXES_COLUMNS - 1 &&
              columnsUsed.find(column) == columnsUsed.cend()));
         columnsUsed.insert(column);
 
-        const Coordinate row = m_boxesLocations[column].size();
+        const Coordinate row = columnHeight(column);
         addBox(row, column);
     }
 }
@@ -371,9 +388,9 @@ void World::generateRandomPosition()
 
 Coordinate World::initialPlayerColumn() const
 {
-    for (Coordinate i = 0; i < m_boxesLocations.size(); ++i)
+    for (Coordinate i = 0; i < m_boxesStatic.size(); ++i)
     {
-        if (m_boxesLocations[i].size() == MAX_BOXES_IN_COLUMN)
+        if (m_boxesStatic[i].size() == MAX_BOXES_IN_COLUMN)
         {
             return i;
         }
@@ -396,7 +413,7 @@ void World::generatePredefinedPosition(const InitialPosition &initialPosition)
 }
 
 
-BoxPtr World::addBox()
+BoxPtr World::loadCrane()
 {
     BoxPtr box = std::make_shared<Box>();
     m_boxes.emplace(box->id(), box);
@@ -406,9 +423,10 @@ BoxPtr World::addBox()
 
 BoxPtr World::addBox(Coordinate row, Coordinate column)
 {
-    BoxPtr box = addBox();
+    BoxPtr box = std::make_shared<Box>();
     box->setPosition(sf::Vector2f(column * BOX_SIZE, row * BOX_SIZE));
-    m_boxesLocations[column].push_back(box->id());
+    m_boxesStatic[column][row] = box->id();
+    m_boxes.emplace(box->id(), box);
     return box;
 }
 
@@ -504,12 +522,12 @@ void World::resetCrane(Crane &crane, float offsetLength)
     crane.reset(position, left, movementLength);
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
-        m_boxesLocations.size() - 1);
+        m_boxesStatic.size() - 1);
     crane.setDropColumn(distributionColumn(m_randomEngine));
 
     if (!crane.isLoaded())
     {
-        const BoxPtr box = addBox();
+        const BoxPtr box = loadCrane();
         crane.load(box->id());
     }
     BoxPtr &box = m_boxes[crane.boxId()];
@@ -519,7 +537,7 @@ void World::resetCrane(Crane &crane, float offsetLength)
 
 void World::setPlayerColumn(Coordinate column)
 {
-    const Coordinate row = m_boxesLocations[column].size();
+    const Coordinate row = columnHeight(column);
     const sf::Vector2f playerPosition(column * BOX_SIZE, row * BOX_SIZE);
     m_player.setPosition(playerPosition);
 }
@@ -530,16 +548,6 @@ void World::updateActive(const Duration &elapsed)
     // Обновление игрока.
     updatePlayer(elapsed);
 
-    // Обновление ящиков.
-    for (auto it = m_boxes.begin(); it != m_boxes.end(); ++it)
-    {
-        BoxPtr &box = it->second;
-        if (updateBox(*box.get(), elapsed))
-        {
-            m_boxes.erase(it);
-        }
-    }
-
     // Обновление кранов.
     for (CranePtr &crane : m_cranes)
     {
@@ -548,6 +556,8 @@ void World::updateActive(const Duration &elapsed)
             updateCrane(*crane.get(), elapsed);
         }
     }
+
+    updateBoxes(elapsed);
 
     // Проверка нижнего ряда.
     if (bottomRowFilled())
@@ -590,20 +600,20 @@ bool World::canPlayerMove(
         return
             playerRow < ROWS_WITH_ALLOWED_JUMP &&
             column > 1 &&
-            row == m_boxesLocations[column].size() &&
-            row >= m_boxesLocations[column - 1].size() &&
-            row + 1 >= m_boxesLocations[column - 2].size();
+            row == columnHeight(column) &&
+            row >= columnHeight(column - 1) &&
+            row + 1 >= columnHeight(column - 2);
     case Player::Direction::UpRight:
         return
             playerRow < ROWS_WITH_ALLOWED_JUMP &&
             column < BOXES_COLUMNS - 2 &&
-            row == m_boxesLocations[column].size() &&
-            row >= m_boxesLocations[column + 1].size() &&
-            row + 1 >= m_boxesLocations[column + 2].size();
+            row == columnHeight(column) &&
+            row >= columnHeight(column + 1) &&
+            row + 1 >= columnHeight(column + 2);
     case Player::Direction::Up:
         return
             playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            row == m_boxesLocations[column].size();
+            row == columnHeight(column);
     default:
         return false;
     }
@@ -626,8 +636,8 @@ bool World::canPlayerMoveLeftOrRight(
 
     // Переход на соседнюю стопку без толкания ящика.
     // Игрок должен стоять на ящике, либо встать на ящик после перемещения.
-    const Coordinate nextColumnHeight = m_boxesLocations[column + k].size();
-    const Coordinate currentColumnHeight = m_boxesLocations[column].size();
+    const Coordinate nextColumnHeight = columnHeight(column + k);
+    const Coordinate currentColumnHeight = columnHeight(column);
     if (row == nextColumnHeight ||
         (row == currentColumnHeight && row > nextColumnHeight))
     {
@@ -642,7 +652,7 @@ bool World::canPlayerMoveLeftOrRight(
         ((left && column >= 2) ||
         (!left && column <= BOXES_COLUMNS - 3)) &&
         row == nextColumnHeight - 1 &&
-        row >= m_boxesLocations[column + 2 * k].size();
+        row >= columnHeight(column + 2 * k);
 }
 
 
@@ -654,13 +664,13 @@ Player::Direction World::playerNextDirection(
     Player::Direction result = Player::Direction::None;
     if (direction == Player::Direction::UpLeft)
     {
-        result = row + 1 == m_boxesLocations[column - 2].size()
+        result = row + 1 == columnHeight(column - 2)
             ? Player::Direction::Left
             : Player::Direction::DownLeft;
     }
     else if (direction == Player::Direction::UpRight)
     {
-        result = row + 1 == m_boxesLocations[column + 2].size()
+        result = row + 1 == columnHeight(column + 2)
             ? Player::Direction::Right
             : Player::Direction::DownRight;
     }
@@ -692,7 +702,7 @@ void World::updatePlayer(const Duration &elapsed)
 
     const float playerHeight = m_player.getPosition().y;
     const float columnHeight =
-        float(m_boxesLocations[playerColumn.value()].size()) * BOX_SIZE;
+        float(this->columnHeight(playerColumn.value())) * BOX_SIZE;
     if (playerHeight > columnHeight)
     {
         if (!m_player.isMoving())
@@ -710,28 +720,69 @@ void World::updatePlayer(const Duration &elapsed)
 }
 
 
-bool World::updateBox(Box &box, const Duration &elapsed)
+void World::updateBoxes(const Duration &elapsed)
+{
+    std::map<BoxPtr, BoxIndexChange> updateIndex;
+
+    for (auto &column : m_boxesStatic)
+    {
+        for (const Object::Id boxId : column)
+        {
+            if (boxId == NULL_ID)
+            {
+                continue;
+            }
+            BoxPtr &box = m_boxes[boxId];
+            const BoxIndexChange change = updateBox(*box.get(), elapsed);
+            if (change != BoxIndexChange::None)
+            {
+                updateIndex[box] = change;
+            }
+        }
+    }
+    for (auto it = m_boxesMoving.begin(); it != m_boxesMoving.end(); ++it)
+    {
+        const Object::Id boxId = *it;
+        BoxPtr &box = m_boxes[boxId];
+        const BoxIndexChange change = updateBox(*box.get(), elapsed);
+        if (change != BoxIndexChange::None)
+        {
+            updateIndex[box] = change;
+        }
+    }
+
+    // Обновление индексов.
+    for (auto it = updateIndex.cbegin(); it != updateIndex.cend(); ++it)
+    {
+        updateBoxesIndex(it->first, it->second);
+    }
+}
+
+
+World::BoxIndexChange World::updateBox(Box &box, const Duration &elapsed)
 {
     box.update(elapsed);
 
     if (box.isBlowing())
     {
-        return false;
+        return BoxIndexChange::None;
     }
 
     if (box.isBlowed())
     {
-        return box.getPosition().y > 0;
+        // Если ящик взорвался в воздухе, то он был сбит игроком.
+        return box.getPosition().y > 0
+            ? BoxIndexChange::BlowedByPlayer
+            : BoxIndexChange::None;
     }
 
     const std::optional<Coordinate> boxColumn = box.column();
     if (!boxColumn.has_value())
     {
-        return false;
+        // Пока ящик не переместился в определённую колонку
+        // ничего обновлять не требуется.
+        return BoxIndexChange::None;
     }
-
-    const Coordinate column = boxColumn.value();
-    const float boxHeight = box.getPosition().y;
 
     if (boxHitsPlayer(box))
     {
@@ -740,9 +791,11 @@ bool World::updateBox(Box &box, const Duration &elapsed)
         {
             stop();
         }
-        return false;
+        return BoxIndexChange::None;
     }
 
+    const Coordinate column = boxColumn.value();
+    const float boxHeight = box.getPosition().y;
     const float columnHeight = this->columnHeight(column) * BOX_SIZE;
     if (boxHeight > columnHeight)
     {
@@ -750,8 +803,9 @@ bool World::updateBox(Box &box, const Duration &elapsed)
         if (!box.isFalling())
         {
             box.move(Box::Direction::Down);
+            return BoxIndexChange::StartFalling;
         }
-        return false;
+        return BoxIndexChange::None;
     }
 
     // Ящик стоит на стопке.
@@ -761,19 +815,48 @@ bool World::updateBox(Box &box, const Duration &elapsed)
     {
         box.stopFalling();
         box.move(Box::Direction::None);
-
-        // Если ящик был перемещен из одной колонки в другую,
-        // то необходимо обновление индексации.
-        auto &boxesInColumn = m_boxesLocations[column];
-        if (boxesInColumn.cend() == std::find(
-                boxesInColumn.cbegin(),
-                boxesInColumn.cend(),
-                box.id()))
-        {
-            m_boxesLocations[column].push_back(box.id());
-        }
+        return BoxIndexChange::Stopped;
     }
-    return false;
+
+    return BoxIndexChange::None;
+}
+
+
+void World::updateBoxesIndex(const BoxPtr &box, BoxIndexChange change)
+{
+    switch (change)
+    {
+    case BoxIndexChange::StartFalling:
+        {
+            auto &boxesInColumn = m_boxesStatic[box->column().value()];
+            auto it = std::find(
+                boxesInColumn.begin(),
+                boxesInColumn.end(),
+                box->id());
+            if (it != boxesInColumn.cend())
+            {
+                *it = NULL_ID;
+            }
+            m_boxesMoving.insert(box->id());
+        }
+        break;
+    case BoxIndexChange::Stopped:
+        {
+            const std::optional<Coordinate> boxRow = box->row();
+            if (boxRow.has_value())
+            {
+                m_boxesMoving.erase(box->id());
+                m_boxesStatic[box->column().value()][boxRow.value()] = box->id();
+            }
+        }
+        break;
+    case BoxIndexChange::BlowedByPlayer:
+        m_boxesMoving.erase(box->id());
+        m_boxes.erase(box->id());
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -794,9 +877,7 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
         }
         else
         {
-            box->move(crane.isLeft()
-                ? Box::Direction::Left
-                : Box::Direction::Right);
+            box->setPosition(sum(crane.getPosition(), BOX_OFFSET));
         }
     }
 
@@ -815,15 +896,16 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
 }
 
 
-void World::startMoveBox(
-    Coordinate,
+void World::pushBox(
+    Coordinate row,
     Coordinate column,
     Box::Direction direction)
 {
-    const Object::Id boxId = m_boxesLocations[column].back();
+    const Object::Id boxId = m_boxesStatic[column][row];
     BoxPtr &box = m_boxes[boxId];
     box->move(direction);
-    m_boxesLocations[column].pop_back();
+    m_boxesStatic[column][row] = NULL_ID;
+    m_boxesMoving.insert(box->id());
 }
 
 
@@ -851,7 +933,7 @@ bool World::canDropBox(Object::Id boxId, Coordinate column) const
         return false;
     }
 
-    if (m_boxesLocations[column].size() >= BOXES_ROWS)
+    if (columnHeight(column) >= BOXES_ROWS)
     {
         // Стопка ящиков достигла максимальной высоты.
         return false;
@@ -877,6 +959,7 @@ bool World::canDropBox(Object::Id boxId, Coordinate column) const
 
 void World::dropBox(Crane &crane)
 {
+    m_boxesMoving.insert(crane.boxId());
     crane.drop();
     // Очки за сборс начисляются, если игрок жив.
     if (m_player.alive())
@@ -888,9 +971,9 @@ void World::dropBox(Crane &crane)
 
 bool World::bottomRowFilled() const
 {
-    for (const auto &column : m_boxesLocations)
+    for (const auto &column : m_boxesStatic)
     {
-        if (column.empty())
+        if (column.front() == NULL_ID)
         {
             return false;
         }
@@ -903,7 +986,7 @@ bool World::blowBottomRow()
 {
     bool addScore = false;
     bool rowBlowed = true;
-    for (auto &column : m_boxesLocations)
+    for (auto &column : m_boxesStatic)
     {
         const Object::Id bottomBoxId = column.front();
         BoxPtr &box = m_boxes[bottomBoxId];
@@ -915,7 +998,7 @@ bool World::blowBottomRow()
         else
         {
             m_boxes.erase(bottomBoxId);
-            column.pop_front();
+            column.front() = NULL_ID;
         }
     }
     if (addScore)
@@ -929,18 +1012,26 @@ bool World::blowBottomRow()
 
 Coordinate World::columnHeight(Coordinate column) const noexcept
 {
-    Coordinate row = 0;
-    for (const Object::Id &boxId : m_boxesLocations[column])
+    std::size_t row = 0;
+    for (; row < m_boxesStatic[column].size(); ++row)
     {
-        const BoxPtr &box = m_boxes.at(boxId);
-        const std::optional<Coordinate> boxRow = box->row();
-        if (box->isFalling() || !boxRow.has_value() || boxRow.value() != row)
+        if (m_boxesStatic[column][row] == NULL_ID)
         {
             break;
         }
-        ++row;
     }
     return row;
+}
+
+
+void World::renderCrane(Crane &crane, sf::RenderTarget &target) const
+{
+    target.draw(crane, m_transform);
+    if (crane.boxId() != NULL_ID)
+    {
+        const BoxPtr &box = m_boxes.at(crane.boxId());
+        target.draw(*box, m_transform);
+    }
 }
 
 

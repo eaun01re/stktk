@@ -56,10 +56,11 @@ struct TextureSpriteIndex
 using TextureSpriteIndices = std::vector<TextureSpriteIndex>;
 using TextureSpriteIndicesPtr = const TextureSpriteIndices*;
 
+/// Анимация, составленная набором спрайтов и их ориентацией по горизонтали.
 struct AnimationOriented
 {
     /*!
-     * \param[in] id Идентификатор анимации.
+     * \param[in] indices Список спрайтов.
      * \param[in] mirrored Признак отражения по горизонтали.
      */
     explicit AnimationOriented(
@@ -76,6 +77,7 @@ struct AnimationOriented
     }
 
     TextureSpriteIndicesPtr indices;
+    /// Признак отражения спрайтов по горизонтали.
     bool mirrored;
 };
 
@@ -83,10 +85,21 @@ struct AnimationOriented
 class Animator final
 {
 public:
+    /*!
+     * \param[in] texture Текстура, содержащая спрайты.
+     * \param[in] spritesQuantity Размерность текстуры в количестве спрайтов
+     * по горизонтали и вертикали.
+     */
     explicit Animator(
         const sf::Texture &texture,
         const sf::Vector2u &spritesQuantity);
     void setAnimation(const AnimationOriented animation);
+    /*!
+     * Назначает последовательность из нескольких анимаций.
+     * После завершения одной анимации включается следующая,
+     * если текущая анимация не последняя.
+     * \param[in] sequence Последовательность анимаций.
+     */
     void setAnimationSequence(const std::vector<AnimationOriented> &sequence);
     bool update(const Duration &elapsed);
     unsigned int currentSpriteIndex() const noexcept;
@@ -100,12 +113,13 @@ private:
 private:
     std::size_t m_currentAnimationIndex{ 0 };
     std::vector<AnimationOriented> m_currentAnimationSequence;
-
+    /// Номер текущего отображаемого спрайта.
     unsigned int m_currentSpriteIndex{ 0 };
     /// Участок текущего спрайта в текстуре.
     sf::IntRect m_currentRect;
     /// Признак принудительного обновления спрайта.
+    /// Выставляется при назначении другой анимации.
     bool m_forceUpdate{ false };
-
-    Duration m_totalTime{ 0 };
+    /// Длительность отображения текущего спрайта.
+    Duration m_currentSpriteTime{ 0 };
 };

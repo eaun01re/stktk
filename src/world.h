@@ -3,9 +3,9 @@
 
 #include <array>
 #include <functional>
-#include <list>
 #include <optional>
 #include <random>
+#include <set>
 
 #include <SFML/Graphics.hpp>
 
@@ -45,6 +45,15 @@ public:
     unsigned int score() const noexcept;
 
 private:
+    enum BoxIndexChange
+    {
+        None,
+        StartFalling,
+        Stopped,
+        BlowedByPlayer
+    };
+
+private:
     void setup();
     void resume();
     void pause();
@@ -67,7 +76,7 @@ private:
      * \sa MAX_BOXES_IN_COLUMN
      */
     Coordinate initialPlayerColumn() const;
-    BoxPtr addBox();
+    BoxPtr loadCrane();
     BoxPtr addBox(Coordinate row, Coordinate column);
     void addCranes(uint8_t cranesQuantity);
     /*!
@@ -104,8 +113,6 @@ private:
     void resetCrane(Crane &crane, float offsetLength = 0);
     void loadCrane(Crane &crane);
     void setPlayerColumn(Coordinate column);
-    void updateActive(const Duration &elapsed);
-    void updatePaused(const Duration &elapsed);
     bool canPlayerMove(
         const std::optional<Coordinate> &playerRow,
         const std::optional<Coordinate> &playerColumn,
@@ -118,7 +125,10 @@ private:
         Player::Direction direction,
         Coordinate row,
         Coordinate column) const;
+    void updateActive(const Duration &elapsed);
+    void updatePaused(const Duration &elapsed);
     void updatePlayer(const Duration &elapsed);
+    void updateBoxes(const Duration &elapsed);
     /*!
      * Обновляет ящик.
      * \param[in] box Обновляемый ящик.
@@ -126,9 +136,10 @@ private:
      * \return \c true, если ящик следует немедленно удалить
      * (был сбит в воздухе), \c false - в противном случае.
      */
-    bool updateBox(Box &box, const Duration &elapsed);
+    BoxIndexChange updateBox(Box &box, const Duration &elapsed);
+    void updateBoxesIndex(const BoxPtr &box, BoxIndexChange change);
     void updateCrane(Crane &crane, const Duration &elapsed);
-    void startMoveBox(
+    void pushBox(
         Coordinate row,
         Coordinate column,
         Box::Direction direction);
@@ -152,6 +163,7 @@ private:
      * \return Количество неподвижных ящиков.
      */
     Coordinate columnHeight(Coordinate column) const noexcept;
+    void renderCrane(Crane &crane, sf::RenderTarget &target) const;
     void stop();
 
 private:
@@ -161,7 +173,11 @@ private:
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };
 
     std::map<Object::Id, BoxPtr> m_boxes;
-    std::array<std::list<Object::Id>, BOXES_COLUMNS> m_boxesLocations;
+    // Индексация ящиков.
+    /// Ящики, лежащие на полу.
+    std::array<std::array<Object::Id, BOXES_ROWS>, BOXES_COLUMNS> m_boxesStatic;
+    /// Ящики, находящиеся в движении, кроме удерживаемых кранами.
+    std::set<Object::Id> m_boxesMoving;
 
     std::array<CranePtr, MAX_CRANES_QUANTITY> m_cranes;
 
