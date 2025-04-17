@@ -6,7 +6,6 @@
 #include "initial_position.h"
 #include "log.h"
 #include "math.h"
-#include "resource_loader.h"
 #include "objects/hourglass.h"
 #include "objects/number.h"
 
@@ -205,6 +204,15 @@ void World::movePlayer(const Player::Direction direction)
         playerCoordinates.column.value());
 
     m_player.move(direction, push, secondDirection);
+
+    if (direction & Player::Direction::Up)
+    {
+        playSound(ResourceLoader::SoundId::Jump);
+    }
+    else if (push)
+    {
+        playSound(ResourceLoader::SoundId::Push);
+    }
 }
 
 
@@ -716,6 +724,7 @@ void World::updatePlayer(const Duration &elapsed)
     {
         m_player.stopFalling();
         m_player.move(Player::Direction::None);
+        playSound(ResourceLoader::SoundId::Land);
     }
 }
 
@@ -724,6 +733,7 @@ void World::updateBoxes(const Duration &elapsed)
 {
     std::map<BoxPtr, BoxIndexChange> updateIndex;
 
+    // Обновление стоящих ящиков.
     for (auto &column : m_boxesStatic)
     {
         for (const Object::Id boxId : column)
@@ -740,6 +750,7 @@ void World::updateBoxes(const Duration &elapsed)
             }
         }
     }
+    // Обновление движущихся ящиков.
     for (auto it = m_boxesMoving.begin(); it != m_boxesMoving.end(); ++it)
     {
         const Object::Id boxId = *it;
@@ -787,9 +798,17 @@ World::BoxIndexChange World::updateBox(Box &box, const Duration &elapsed)
     if (boxHitsPlayer(box))
     {
         box.blow();
-        if (!(m_player.direction() & Player::Direction::Up))
+        if (m_player.alive())
         {
-            stop();
+            if (!(m_player.direction() & Player::Direction::Up))
+            {
+                // Ящик упал на игрока, не находящегося в прыжке => конец игры.
+                stop();
+            }
+            else
+            {
+                playSound(ResourceLoader::SoundId::Blow);
+            }
         }
         return BoxIndexChange::None;
     }
@@ -862,6 +881,7 @@ void World::updateBoxesIndex(const BoxPtr &box, BoxIndexChange change)
 
 void World::updateCrane(Crane &crane, const Duration &elapsed)
 {
+    // FIXME: Устранить причину нарушения взаимного расположения кранов.
     crane.update(elapsed);
 
     if (crane.boxId() != NULL_ID)
@@ -1005,6 +1025,7 @@ bool World::blowBottomRow()
     {
         const std::size_t cranesQuantity = this->cranesQuantity();
         m_score += cranesQuantity * BLOW_BOTTOM_ROW_SCORE_MULTIPLIER;
+        playSound(ResourceLoader::SoundId::Score);
     }
     return rowBlowed;
 }
@@ -1035,10 +1056,20 @@ void World::renderCrane(Crane &crane, sf::RenderTarget &target) const
 }
 
 
+void World::playSound(ResourceLoader::SoundId id)
+{
+    // TODO: Сделать очередь из звуков, чтобы звук прыжка не перекрывал звук приземления.
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    m_sound.setBuffer(*resourceLoader.sound(id));
+    m_sound.play();
+}
+
+
 void World::stop()
 {
     LOG_INFO("Game over. Score: " << m_score << '.');
     m_player.setAlive(false);
+    playSound(ResourceLoader::SoundId::GameOver);
 
     NumberPtr number = std::make_shared<Number>(m_score);
     number->setPosition(SCORE_POSITION_STOPPED);

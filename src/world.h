@@ -13,6 +13,7 @@
 #include "objects/crane.h"
 #include "objects/player.h"
 #include "objects/figure.h"
+#include "resource_loader.h"
 
 
 namespace
@@ -164,6 +165,7 @@ private:
      */
     Coordinate columnHeight(Coordinate column) const noexcept;
     void renderCrane(Crane &crane, sf::RenderTarget &target) const;
+    void playSound(ResourceLoader::SoundId id);
     void stop();
 
 private:
@@ -192,6 +194,8 @@ private:
     std::vector<FigurePtr> m_scoreFigures;
 
     bool m_paused{ true };
+
+    sf::Sound m_sound;
 
     mutable std::mt19937 m_randomEngine;
 };
