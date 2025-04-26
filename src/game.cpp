@@ -10,13 +10,13 @@
 Game::Game()
     : m_window(
         ProjectName,
-        std::bind(&Game::windowResized, this, std::placeholders::_1),
-        std::bind(&Game::keyPressed, this, std::placeholders::_1),
-        std::bind(&Game::keyReleased, this, std::placeholders::_1))
+        std::bind(&Game::onWindowResized, this, std::placeholders::_1),
+        std::bind(&Game::onKeyPressed, this, std::placeholders::_1),
+        std::bind(&Game::onKeyReleased, this, std::placeholders::_1))
 {
     restartClock();
-    m_maskLeft.setFillColor(BACKGROUND_COLOR);
-    m_maskRight.setFillColor(BACKGROUND_COLOR);
+    m_maskLeft.setFillColor(sf::Color::Black);
+    m_maskRight.setFillColor(sf::Color::Black);
 }
 
 
@@ -30,7 +30,6 @@ bool Game::init()
     }
 
     m_world.reset(new World());
-    m_world->init();
     return result;
 }
 
@@ -59,7 +58,7 @@ void Game::reset(
 }
 
 
-void Game::windowResized(const sf::Vector2u &size)
+void Game::onWindowResized(const sf::Vector2u &size)
 {
     LOG_DEBUG("Window is resized to " << size.x << 'x' << size.y << '.');
     m_window.resize(size);
@@ -74,13 +73,13 @@ void Game::windowResized(const sf::Vector2u &size)
 }
 
 
-void Game::keyPressed(const sf::Event::KeyEvent &key)
+void Game::onKeyPressed(const sf::Event::KeyEvent &key)
 {
     m_world->handleKeyPressed(key.code);
 }
 
 
-void Game::keyReleased(const sf::Event::KeyEvent &key)
+void Game::onKeyReleased(const sf::Event::KeyEvent &key)
 {
     m_world->handleKeyReleased(key.code);
 }

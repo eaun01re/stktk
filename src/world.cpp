@@ -14,6 +14,8 @@ namespace
 {
 
 constexpr sf::Keyboard::Key KEY_PAUSE = sf::Keyboard::Key::Num0;
+constexpr sf::Keyboard::Key KEY_PAUSE2 = sf::Keyboard::Key::Numpad0;
+
 constexpr sf::Keyboard::Key KEY_RESTART = sf::Keyboard::Key::Space;
 
 /// Количество ящиков в начале игры.
@@ -61,16 +63,21 @@ Player::Direction directionByKey(sf::Keyboard::Key key)
     {
     case sf::Keyboard::Key::Left:
     case sf::Keyboard::Key::A:
+    case sf::Keyboard::Key::Numpad4:
         return Player::Direction::Left;
     case sf::Keyboard::Key::Right:
     case sf::Keyboard::Key::D:
+    case sf::Keyboard::Key::Numpad6:
         return Player::Direction::Right;
     case sf::Keyboard::Key::Up:
     case sf::Keyboard::Key::W:
+    case sf::Keyboard::Key::Numpad8:
         return Player::Direction::Up;
     case sf::Keyboard::Key::Q:
+    case sf::Keyboard::Key::Numpad7:
         return Player::Direction::UpLeft;
     case sf::Keyboard::Key::E:
+    case sf::Keyboard::Key::Numpad9:
         return Player::Direction::UpRight;
     default:
         return Player::Direction::None;
@@ -93,19 +100,6 @@ World::World()
 }
 
 
-void World::init()
-{
-    ResourceLoader &resourceLoader = ResourceLoader::instance();
-
-    m_background.setTexture(
-        *resourceLoader.texture(ResourceLoader::TextureId::Background));
-
-    m_foreground.setTexture(
-        *resourceLoader.texture(ResourceLoader::TextureId::Foreground));
-    m_foreground.setColor(BACKGROUND_COLOR);
-}
-
-
 void World::start(
     std::uint8_t cranesQuantity,
     const std::optional<unsigned int> &positionIndex)
@@ -114,7 +108,7 @@ void World::start(
     clearObjects();
     m_scoreFigures.clear();
 
-    // Инициализация новых объектов.
+    // Инициализация ящиков.
     Coordinate playerColumn = 0;
     if (positionIndex.has_value() && positionIndex.value() < INITIAL_POSITIONS.size())
     {
@@ -130,10 +124,12 @@ void World::start(
         playerColumn = initialPlayerColumn();
     }
 
+    // Инициализация игрока.
     setPlayerColumn(playerColumn);
     m_player.setAlive(true);
 
     addCranes(cranesQuantity);
+
     m_score = 0;
     m_paused = false;
     resume();
@@ -197,13 +193,7 @@ void World::movePlayer(const Player::Direction direction)
         break;
     }
 
-    // Уточнение направления при прыжке вбок по диагонали.
-    const Player::Direction secondDirection = playerNextDirection(
-        direction,
-        playerCoordinates.row.value(),
-        playerCoordinates.column.value());
-
-    m_player.move(direction, push, secondDirection);
+    m_player.move(direction, push);
 
     if (direction & Player::Direction::Up)
     {
@@ -273,7 +263,7 @@ void World::handleKeyPressed(sf::Keyboard::Key key)
         return;
     }
 
-    if (key == KEY_PAUSE)
+    if (key == KEY_PAUSE || key == KEY_PAUSE2)
     {
         togglePause();
         return;
@@ -323,6 +313,15 @@ void World::setup()
     // https://www.sfml-dev.org/tutorials/2.6/graphics-transform.php
     m_transform.translate(BOTTOM_LEFT_CORNER);
     m_transform.scale(sf::Vector2f(1, -1));
+
+    m_player.setMoveFinishedCallback(
+        std::bind(&World::onPlayerMoveFinished, this, std::placeholders::_1));
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    m_background.setTexture(
+        *resourceLoader.texture(ResourceLoader::TextureId::Background));
+    m_foreground.setTexture(
+        *resourceLoader.texture(ResourceLoader::TextureId::Foreground));
+    m_foreground.setColor(BACKGROUND_COLOR);
 }
 
 
@@ -398,7 +397,7 @@ Coordinate World::initialPlayerColumn() const
 {
     for (Coordinate i = 0; i < m_boxesStatic.size(); ++i)
     {
-        if (m_boxesStatic[i].size() == MAX_BOXES_IN_COLUMN)
+        if (columnHeight(i) == MAX_BOXES_IN_COLUMN)
         {
             return i;
         }
@@ -595,42 +594,27 @@ bool World::canPlayerMove(
 
     const Coordinate column = playerColumn.value();
     const Coordinate row = playerRow.value();
-
     switch (direction)
     {
     case Player::Direction::None:
         return false;
     case Player::Direction::Left:
-        return canPlayerMoveLeftOrRight(row, column, true);
+        return canPlayerMoveHorizontal(row, column, true);
     case Player::Direction::Right:
-        return canPlayerMoveLeftOrRight(row, column, false);
+        return canPlayerMoveHorizontal(row, column, false);
     case Player::Direction::UpLeft:
-        return
-            playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            column > 1 &&
-            row == columnHeight(column) &&
-            row >= columnHeight(column - 1) &&
-            row + 1 >= columnHeight(column - 2);
+        return canPlayerMoveDiagonal(row, column, true);
     case Player::Direction::UpRight:
-        return
-            playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            column < BOXES_COLUMNS - 2 &&
-            row == columnHeight(column) &&
-            row >= columnHeight(column + 1) &&
-            row + 1 >= columnHeight(column + 2);
+        return canPlayerMoveDiagonal(row, column, false);
     case Player::Direction::Up:
-        return
-            playerRow < ROWS_WITH_ALLOWED_JUMP &&
-            row == columnHeight(column);
+        return canPlayerMoveVertical(row, column);
     default:
         return false;
     }
-
-    return false;
 }
 
 
-bool World::canPlayerMoveLeftOrRight(
+bool World::canPlayerMoveHorizontal(
     Coordinate row,
     Coordinate column,
     bool left) const
@@ -664,6 +648,75 @@ bool World::canPlayerMoveLeftOrRight(
 }
 
 
+bool World::canPlayerMoveVertical(Coordinate row, Coordinate column) const
+{
+    return row < ROWS_WITH_ALLOWED_JUMP && row == columnHeight(column);
+}
+
+
+bool World::canPlayerMoveDiagonal(
+    Coordinate row,
+    Coordinate column,
+    bool left) const
+{
+    // Проверка выхода за границы области прыжка.
+    bool allowed =
+        row < ROWS_WITH_ALLOWED_JUMP &&
+        ((left && (column > 1)) || (!left && (column < BOXES_COLUMNS - 2)));
+    if (!allowed)
+    {
+        return false;
+    }
+
+    // Проверка столкновения с неподвижными ящиками.
+    const int k = left ? -1 : 1;
+    allowed =
+        row == columnHeight(column) &&
+        row >= columnHeight(column + k) &&
+        row + 1 >= columnHeight(column + 2 * k);
+    if (!allowed)
+    {
+        return false;
+    }
+
+    // Проверка столкновения с падающими ящиками.
+    // Т.к. вертикальные скорости игрока и ящика известны и равны
+    // можно узнать их взаимное положение через определённое время.
+    for (const Object::Id boxId : m_boxesMoving)
+    {
+        const BoxPtr &box = m_boxes.at(boxId);
+        const std::optional<Coordinate> boxColumn = box->column();
+        if (!boxColumn.has_value())
+        {
+            continue;
+        }
+
+        // Ограничение ящиками в соседней колонке.
+        // В момент нахождения в наивысшей точке прыжка
+        // игрок не должен касаться ящика головой.
+        if (std::abs(int(boxColumn.value()) - int(column)) == 1 &&
+            m_player.getPosition().y + Player::height() + BOX_SIZE
+            > box->getPosition().y - BOX_SIZE)
+        {
+            return false;
+        }
+
+        // Ограничение ящиками в колонке где завершится прыжок.
+        // Ящик не ограничивает прыжок, если он еще падает, но либо успеет
+        // приземлиться к моменту когда игрок будет на него становиться, либо
+        // будет ещё достаточно высоко и не коснётся игрока в конце прыжка.
+        if (std::abs(int(boxColumn.value()) - int(column)) == 2 &&
+            (box->getPosition().y >= m_player.getPosition().y + BOX_SIZE) &&
+            (box->getPosition().y - 2 * BOX_SIZE
+             < m_player.getPosition().y + Player::height() + BOX_SIZE))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 Player::Direction World::playerNextDirection(
     Player::Direction direction,
     Coordinate row,
@@ -672,17 +725,27 @@ Player::Direction World::playerNextDirection(
     Player::Direction result = Player::Direction::None;
     if (direction == Player::Direction::UpLeft)
     {
-        result = row + 1 == columnHeight(column - 2)
+        result = row == columnHeight(column - 1)
             ? Player::Direction::Left
             : Player::Direction::DownLeft;
     }
     else if (direction == Player::Direction::UpRight)
     {
-        result = row + 1 == columnHeight(column + 2)
+        result = row == columnHeight(column + 1)
             ? Player::Direction::Right
             : Player::Direction::DownRight;
     }
     return result;
+}
+
+
+void World::onPlayerMoveFinished(Player::Direction lastDirection)
+{
+    const Player::Direction nextDirection = playerNextDirection(
+        lastDirection,
+        m_player.row().value(),
+        m_player.column().value());
+    m_player.move(nextDirection, false);
 }
 
 
@@ -693,7 +756,9 @@ void World::updatePlayer(const Duration &elapsed)
     if (m_playerRequestedDirection != Player::Direction::None
         && (m_player.direction() == Player::Direction::None || m_player.isFalling()))
     {
+        // Начало движения игрока в запрошенном направлении, если это возможно.
         movePlayer(m_playerRequestedDirection);
+        m_playerRequestedDirection = Player::Direction::None;
     }
 
     const std::optional<Coordinate> playerColumn = m_player.column();
@@ -702,16 +767,15 @@ void World::updatePlayer(const Duration &elapsed)
         return;
     }
 
-    if (m_player.alive() &&
-        m_playerRequestedDirection == Player::Direction::None && !m_player.isMoving())
+    if (m_playerRequestedDirection == Player::Direction::None
+        && !m_player.isMoving())
     {
-        m_player.stop();
+        m_player.idle();
     }
 
-    const float playerHeight = m_player.getPosition().y;
     const float columnHeight =
         float(this->columnHeight(playerColumn.value())) * BOX_SIZE;
-    if (playerHeight > columnHeight)
+    if (m_player.getPosition().y > columnHeight)
     {
         if (!m_player.isMoving())
         {
@@ -720,6 +784,7 @@ void World::updatePlayer(const Duration &elapsed)
         return;
     }
 
+    // Игрок завершил падение.
     if (m_player.direction() == Player::Direction::Down)
     {
         m_player.stopFalling();

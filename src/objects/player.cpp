@@ -1,6 +1,5 @@
 #include "player.h"
 
-#include <cmath>
 #include <random>
 
 #include "log.h"
@@ -69,10 +68,15 @@ void Player::update(const Duration &elapsed)
 }
 
 
-void Player::move(Direction direction, bool push, Direction nextDirection)
+void Player::setMoveFinishedCallback(MoveFinishedCallback callback)
+{
+    m_moveFinishedCallback = callback;
+}
+
+
+void Player::move(Direction direction, bool push)
 {
     setDirection(direction, push);
-    m_nextDirection = nextDirection;
 }
 
 
@@ -82,9 +86,12 @@ Player::Direction Player::direction() const noexcept
 }
 
 
-void Player::stop()
+void Player::idle()
 {
-    setAnimation(AnimationOriented(&ANIMATION_IDLE));
+    if (alive())
+    {
+        setAnimation(AnimationOriented(&ANIMATION_IDLE));
+    }
 }
 
 
@@ -119,7 +126,7 @@ void Player::setAlive(bool alive)
 void Player::moveFinished()
 {
     Object::moveFinished();
-    move(m_nextDirection, Direction::None);
+    m_moveFinishedCallback(m_direction);
 }
 
 

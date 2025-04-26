@@ -31,7 +31,6 @@ class World final
 {
 public:
     explicit World();
-    void init();
     void start(
         std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
@@ -118,14 +117,30 @@ private:
         const std::optional<Coordinate> &playerRow,
         const std::optional<Coordinate> &playerColumn,
         const Player::Direction direction) const;
-    bool canPlayerMoveLeftOrRight(
+    bool canPlayerMoveHorizontal(
         Coordinate row,
         Coordinate column,
         bool left) const;
+    bool canPlayerMoveVertical(Coordinate row, Coordinate column) const;
+    bool canPlayerMoveDiagonal(
+        Coordinate row,
+        Coordinate column,
+        bool left) const;
+    /*!
+     * Возвращает следующее направление движения игрока, в котором он будет
+     * двигаться после завершения текущего движения.
+     * \param[in] direction Последнее направление движения игрока.
+     * \param[in] row Текущий ряд игрока.
+     * \param[in] column Текущая колонка игрока.
+     * \return Если игрок достиг наивысшей точки прыжка по диагонали, то
+     * направление, продолжающее этот прыжок.
+     * В противном случае \c Player::Direction::None.
+     */
     Player::Direction playerNextDirection(
         Player::Direction direction,
         Coordinate row,
         Coordinate column) const;
+    void onPlayerMoveFinished(Player::Direction lastDirection);
     void updateActive(const Duration &elapsed);
     void updatePaused(const Duration &elapsed);
     void updatePlayer(const Duration &elapsed);

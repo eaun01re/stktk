@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <functional>
+
 #include <SFML/Graphics.hpp>
 
 #include "objects/object.h"
@@ -22,6 +24,7 @@ public:
         DownLeft = Down | Left,
         DownRight = Down | Right
     };
+    using MoveFinishedCallback = std::function<void(Direction)>;
 
 public:
     static unsigned int height();
@@ -31,12 +34,10 @@ public:
     virtual ~Player() = default;
 
     void update(const Duration &elapsed) override;
-    void move(
-        Direction direction,
-        bool push = false,
-        Direction nextDirection = Direction::None);
+    void setMoveFinishedCallback(MoveFinishedCallback callback);
+    void move(Direction direction, bool push = false);
     Direction direction() const noexcept;
-    void stop();
+    void idle();
     bool alive() const noexcept;
     void setAlive(bool alive);
 
@@ -52,7 +53,7 @@ private:
 
 private:
     Direction m_direction{ Direction::None };
-    Direction m_nextDirection{ Direction::None };
     bool m_lookLeft{ true };
     bool m_alive{ true };
+    MoveFinishedCallback m_moveFinishedCallback;
 };

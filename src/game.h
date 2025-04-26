@@ -23,9 +23,9 @@ public:
     void restartClock();
 
 private:
-    void windowResized(const sf::Vector2u &size);
-    void keyPressed(const sf::Event::KeyEvent &key);
-    void keyReleased(const sf::Event::KeyEvent &key);
+    void onWindowResized(const sf::Vector2u &size);
+    void onKeyPressed(const sf::Event::KeyEvent &key);
+    void onKeyReleased(const sf::Event::KeyEvent &key);
     void renderClippingMask(sf::RenderTarget &target);
 
 private:
