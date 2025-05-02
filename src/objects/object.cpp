@@ -55,7 +55,7 @@ const sf::Vector2f& Object::speed() const noexcept
 
 bool Object::isFalling() const noexcept
 {
-    return m_speed.x == 0 && m_speed.y < 0;
+    return m_speed.y < 0;
 }
 
 
@@ -70,6 +70,11 @@ void Object::stopFalling()
     m_speed.y = 0;
     m_movementLength.y = 0;
     normalizePosition(false, true);
+
+    if (!isTolerant(m_speed))
+    {
+        moveFinished();
+    }
 }
 
 
@@ -84,7 +89,8 @@ Coordinates Object::coordinates() const
 
 std::optional<Coordinate> Object::column() const
 {
-    const sf::Vector2f normalizedPosition = ::normalizedPosition(getPosition(), true, false);
+    const sf::Vector2f normalizedPosition =
+        ::normalizedPosition(getPosition(), true, false);
     if (std::abs(normalizedPosition.x - getPosition().x) >= COORDINATE_TOLERANCE)
     {
         return std::nullopt;
@@ -100,7 +106,8 @@ std::optional<Coordinate> Object::column() const
 
 std::optional<Coordinate> Object::row() const
 {
-    const sf::Vector2f normalizedPosition = ::normalizedPosition(getPosition(), false, true);
+    const sf::Vector2f normalizedPosition =
+        ::normalizedPosition(getPosition(), false, true);
     if (std::abs(normalizedPosition.y - getPosition().y) >= COORDINATE_TOLERANCE)
     {
         return std::nullopt;
@@ -116,7 +123,8 @@ std::optional<Coordinate> Object::row() const
 
 void Object::normalizePosition(bool horizontal, bool vertical)
 {
-    const sf::Vector2f newPosition = normalizedPosition(getPosition(), horizontal, vertical);
+    const sf::Vector2f newPosition =
+        normalizedPosition(getPosition(), horizontal, vertical);
     setPosition(newPosition);
 }
 
@@ -142,28 +150,58 @@ void Object::move(const Duration &elapsed)
         return;
     }
 
+    if (!m_moving)
+    {
+        moveStarted();
+    }
+
     const double elapsedSeconds = elapsed.count();
     sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
+
+    // Горизонтальное движение.
     if ((m_movementLength.x != 0 &&
-         std::isless(m_movementLength.x, 0.0f) == std::isless(m_movementLength.x - offset.x, 0.0f)) ||
-        (m_movementLength.y != 0 &&
-         std::isless(m_movementLength.y, 0.0f) == std::isless(m_movementLength.y - offset.y, 0.0f)))
+        std::isless(m_movementLength.x, 0.0f) ==
+        std::isless(m_movementLength.x - offset.x, 0.0f)))
     {
-        sf::Sprite::move(offset.x, offset.y);
+        sf::Sprite::move(offset.x, 0);
         m_movementLength.x -= offset.x;
+    }
+    else
+    {
+        sf::Sprite::move(m_movementLength.x, 0);
+        m_movementLength.x = 0;
+    }
+
+    // Вертикальное движение.
+    if ((m_movementLength.y != 0 &&
+        std::isless(m_movementLength.y, 0.0f) ==
+        std::isless(m_movementLength.y - offset.y, 0.0f)))
+    {
+        sf::Sprite::move(0, offset.y);
         m_movementLength.y -= offset.y;
     }
     else
     {
-        offset = m_movementLength;
-        sf::Sprite::move(offset.x, offset.y);
+        sf::Sprite::move(0, m_movementLength.y);
+        m_movementLength.y = 0;
+    }
+
+    if (isTolerant(m_speed) && isNull(m_movementLength))
+    {
         moveFinished();
     }
 }
 
 
+void Object::moveStarted()
+{
+    m_moving = true;
+}
+
+
 void Object::moveFinished()
 {
+    m_moving = false;
     normalizePosition(true, true);
     m_speed = sf::Vector2f();
     m_movementLength = sf::Vector2f();

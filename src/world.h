@@ -37,21 +37,11 @@ public:
     void update(const Duration &elapsed);
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
-    void movePlayer(const Player::Direction direction);
     void render(sf::RenderTarget &target);
     void handleKeyPressed(sf::Keyboard::Key key);
     void handleKeyReleased(sf::Keyboard::Key key);
     void togglePause();
     unsigned int score() const noexcept;
-
-private:
-    enum BoxIndexChange
-    {
-        None,
-        StartFalling,
-        Stopped,
-        BlowedByPlayer
-    };
 
 private:
     void setup();
@@ -76,7 +66,7 @@ private:
      * \sa MAX_BOXES_IN_COLUMN
      */
     Coordinate initialPlayerColumn() const;
-    BoxPtr loadCrane();
+    BoxPtr makeBox();
     BoxPtr addBox(Coordinate row, Coordinate column);
     void addCranes(uint8_t cranesQuantity);
     /*!
@@ -113,19 +103,23 @@ private:
     void resetCrane(Crane &crane, float offsetLength = 0);
     void loadCrane(Crane &crane);
     void setPlayerColumn(Coordinate column);
+    void movePlayer(const Player::Direction direction);
     bool canPlayerMove(
         const std::optional<Coordinate> &playerRow,
         const std::optional<Coordinate> &playerColumn,
-        const Player::Direction direction) const;
+        const Player::Direction direction,
+        Object::Id &pushedBoxId) const;
     bool canPlayerMoveHorizontal(
         Coordinate row,
         Coordinate column,
-        bool left) const;
+        bool left,
+        Object::Id &pushedBoxId) const;
     bool canPlayerMoveVertical(Coordinate row, Coordinate column) const;
     bool canPlayerMoveDiagonal(
         Coordinate row,
         Coordinate column,
         bool left) const;
+    bool canPushBox(Box &box, Coordinate boxColumn, bool left) const;
     /*!
      * Возвращает следующее направление движения игрока, в котором он будет
      * двигаться после завершения текущего движения.
@@ -141,6 +135,8 @@ private:
         Coordinate row,
         Coordinate column) const;
     void onPlayerMoveFinished(Player::Direction lastDirection);
+    void onBoxMoveStarted(Object::Id boxId);
+    void onBoxMoveFinished(Object::Id boxId);
     void updateActive(const Duration &elapsed);
     void updatePaused(const Duration &elapsed);
     void updatePlayer(const Duration &elapsed);
@@ -152,13 +148,9 @@ private:
      * \return \c true, если ящик следует немедленно удалить
      * (был сбит в воздухе), \c false - в противном случае.
      */
-    BoxIndexChange updateBox(Box &box, const Duration &elapsed);
-    void updateBoxesIndex(const BoxPtr &box, BoxIndexChange change);
+    bool updateBox(Box &box, const Duration &elapsed);
     void updateCrane(Crane &crane, const Duration &elapsed);
-    void pushBox(
-        Coordinate row,
-        Coordinate column,
-        Box::Direction direction);
+    void pushBox(Box &box, Box::Direction direction);
     bool boxHitsPlayer(const Box &box) const noexcept;
     bool canDropBox(Object::Id boxId, Coordinate column) const;
     void dropBox(Crane &crane);

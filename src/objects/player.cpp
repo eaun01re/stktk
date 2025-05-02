@@ -37,7 +37,9 @@ unsigned int Player::height()
     return BOX_SIZE * 2;
 }
 
-Player::Player()
+
+Player::Player(const MoveFinishedCallback &callback)
+    : m_moveFinishedCallback(callback)
 {
     init();
 }
@@ -66,13 +68,6 @@ void Player::update(const Duration &elapsed)
 
     Object::move(elapsed);
 }
-
-
-void Player::setMoveFinishedCallback(MoveFinishedCallback callback)
-{
-    m_moveFinishedCallback = callback;
-}
-
 
 void Player::move(Direction direction, bool push)
 {
@@ -148,7 +143,9 @@ void Player::setDirection(Direction direction, bool push)
     if ((left && right) || (up && down))
     {
         // Некорректная комбинация направлений.
-        LOG_WARNING("Attempt to set incorrect player direction: " << int(direction) << '.');
+        LOG_WARNING(
+            "Attempt to set incorrect player direction: "
+            << int(direction) << '.');
         return;
     }
     if (push && direction != Direction::Left && direction != Direction::Right)

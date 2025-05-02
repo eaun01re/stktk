@@ -9,6 +9,12 @@ constexpr float TOLERANCE = 1.0e-2;
 
 bool isTolerant(const sf::Vector2f &vector);
 
+template<typename T>
+bool isNull(const sf::Vector2<T> &vector)
+{
+    return vector.x == 0 && vector.y == 0;
+}
+
 sf::Vector2f multiply(const sf::Vector2f &vector, double a);
 
 template<typename T>

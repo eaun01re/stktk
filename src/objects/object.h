@@ -62,6 +62,7 @@ public:
 
 protected:
     void move(const Duration &elapsed);
+    virtual void moveStarted();
     virtual void moveFinished();
 
 protected:
@@ -73,9 +74,9 @@ protected:
 
     /// Скорость, пиксели игрового мира в секунду.
     sf::Vector2f m_speed;
-    /// Текущее смещение с начала движения.
-    sf::Vector2f m_offset;
     sf::Vector2f m_movementLength;
+
+    bool m_moving{ false };
 
 private:
     static Id m_lastId;

@@ -30,11 +30,10 @@ public:
     static unsigned int height();
 
 public:
-    explicit Player();
+    explicit Player(const MoveFinishedCallback &callback);
     virtual ~Player() = default;
 
     void update(const Duration &elapsed) override;
-    void setMoveFinishedCallback(MoveFinishedCallback callback);
     void move(Direction direction, bool push = false);
     Direction direction() const noexcept;
     void idle();

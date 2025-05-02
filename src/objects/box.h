@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <functional>
+
 #include <SFML/Graphics.hpp>
 
 #include "objects/object.h"
@@ -16,24 +18,32 @@ public:
         Right,
         Down
     };
+    using MoveStartedCallback = std::function<void(Id)>;
+    using MoveFinishedCallback = std::function<void(Id)>;
 
 public:
-    explicit Box();
+    explicit Box(
+        const MoveStartedCallback &moveStartedCallback,
+        const MoveFinishedCallback &moveFinishedCallback);
     virtual ~Box() = default;
 
     void update(const Duration &elapsed) override;
     void move(Direction direction);
-    Direction direction() const noexcept;
     bool blow();
     bool isBlowing() const noexcept;
     bool isBlowed() const noexcept;
+
+protected:
+    void moveStarted() override;
+    void moveFinished() override;
 
 private:
     void init();
 
 private:
-    Direction m_direction{ Direction::None };
     std::optional<Duration> m_blowDuration;
+    MoveStartedCallback m_moveStartedCallback;
+    MoveFinishedCallback m_moveFinishedCallback;
 };
 
 

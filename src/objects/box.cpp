@@ -52,21 +52,13 @@ Duration blowDuration()
 }
 
 
-Box::Box()
+Box::Box(
+    const MoveStartedCallback &moveStartedCallback,
+    const MoveFinishedCallback &moveFinishedCallback)
+    : m_moveStartedCallback(moveStartedCallback)
+    , m_moveFinishedCallback(moveFinishedCallback)
 {
     init();
-}
-
-
-void Box::init()
-{
-    ResourceLoader &resourceLoader = ResourceLoader::instance();
-    setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Box));
-
-    m_animator.reset(new Animator(*getTexture(), TEXTURE_SIZE));
-    setAnimation(AnimationOriented(randomRestStyle()));
-    setTextureRect(mirrorVertical(m_animator->rect()));
-    setColor(BACKGROUND_COLOR);
 }
 
 
@@ -85,30 +77,23 @@ void Box::update(const Duration &elapsed)
 
 void Box::move(Direction direction)
 {
-    m_direction = direction;
     switch (direction)
     {
     case Direction::None:
         break;
     case Direction::Left:
-        m_speed = sf::Vector2f(-SPEED, 0);
-        m_movementLength = sf::Vector2f(-BOX_SIZE, 0);
+        m_speed.x = -SPEED;
+        m_movementLength.x = -BOX_SIZE;
         break;
     case Direction::Right:
-        m_speed = sf::Vector2f(SPEED, 0);
-        m_movementLength = sf::Vector2f(BOX_SIZE, 0);
+        m_speed.x = SPEED;
+        m_movementLength.x = BOX_SIZE;
         break;
     case Direction::Down:
-        m_speed = sf::Vector2f(0, -SPEED);
-        m_movementLength = sf::Vector2f(0, -std::numeric_limits<float>::infinity());
+        m_speed.y = -SPEED;
+        m_movementLength.y = -std::numeric_limits<float>::infinity();
         break;
     }
-}
-
-
-Box::Direction Box::direction() const noexcept
-{
-    return m_direction;
 }
 
 
@@ -135,4 +120,30 @@ bool Box::isBlowing() const noexcept
 bool Box::isBlowed() const noexcept
 {
     return m_blowDuration.has_value() && m_blowDuration.value() > blowDuration();
+}
+
+
+void Box::moveStarted()
+{
+    Object::moveStarted();
+    m_moveStartedCallback(id());
+}
+
+
+void Box::moveFinished()
+{
+    Object::moveFinished();
+    m_moveFinishedCallback(id());
+}
+
+
+void Box::init()
+{
+    ResourceLoader &resourceLoader = ResourceLoader::instance();
+    setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Box));
+
+    m_animator.reset(new Animator(*getTexture(), TEXTURE_SIZE));
+    setAnimation(AnimationOriented(randomRestStyle()));
+    setTextureRect(mirrorVertical(m_animator->rect()));
+    setColor(BACKGROUND_COLOR);
 }
