@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "log.h"
+#include "world.h"
 #include "resource_loader.h"
 #include "version/version.h"
 
@@ -23,14 +24,7 @@ Game::Game()
 bool Game::init()
 {
     // Загрузка текстур и звуков.
-    const bool result = ResourceLoader::instance().load();
-    if (!result)
-    {
-        return false;
-    }
-
-    m_world.reset(new World());
-    return result;
+    return ResourceLoader::instance().load();
 }
 
 
@@ -50,11 +44,21 @@ void Game::restartClock()
 }
 
 
-void Game::reset(
+std::unique_ptr<Start> Game::makeStartScreen(const std::uint8_t cranesQuantity)
+{
+    std::unique_ptr<Start> screen = std::make_unique<Start>(
+        std::bind(&Game::onStartScreenClosed, this, std::placeholders::_1),
+        cranesQuantity);
+    return screen;
+}
+
+
+void Game::start(
     const std::uint8_t cranesQuantity,
     const std::optional<unsigned int> &position)
 {
-    m_world->start(cranesQuantity, position);
+    m_initialPosition = position;
+    m_screen = makeStartScreen(cranesQuantity);
 }
 
 
@@ -69,19 +73,33 @@ void Game::onWindowResized(const sf::Vector2u &size)
     m_maskLeft.setSize(maskSize);
     m_maskRight.setSize(maskSize);
     m_maskLeft.setPosition(-maskSize.x, 0);
-    m_maskRight.setPosition(SCREEN_SIZE.x, 0);
+    m_maskRight.setPosition(float(SCREEN_SIZE.x), 0);
 }
 
 
 void Game::onKeyPressed(const sf::Event::KeyEvent &key)
 {
-    m_world->handleKeyPressed(key.code);
+    m_screen->handleKeyPressed(key.code);
 }
 
 
 void Game::onKeyReleased(const sf::Event::KeyEvent &key)
 {
-    m_world->handleKeyReleased(key.code);
+    m_screen->handleKeyReleased(key.code);
+}
+
+
+void Game::onStartScreenClosed(const std::optional<Start::Config> &config)
+{
+    if (!config.has_value())
+    {
+        exit();
+        return;
+    }
+
+    std::unique_ptr<World> worldScreen = std::make_unique<World>();
+    worldScreen->start(config.value().cranesQuantity, m_initialPosition);
+    m_screen = std::move(worldScreen);
 }
 
 
@@ -93,7 +111,7 @@ const Window& Game::window() const
 
 void Game::update()
 {
-    m_world->update(m_elapsed);
+    m_screen->update(m_elapsed);
     m_window.update();
 }
 
@@ -104,7 +122,7 @@ void Game::render()
     m_window.beginDraw();
 
     sf::RenderWindow& target = m_window.renderWindow();
-    m_world->render(target);
+    m_screen->render(target);
     renderClippingMask(target);
 
     // Display.
@@ -116,4 +134,10 @@ void Game::renderClippingMask(sf::RenderTarget &target)
 {
     target.draw(m_maskLeft);
     target.draw(m_maskRight);
+}
+
+
+void Game::exit()
+{
+    m_window.close();
 }

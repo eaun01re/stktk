@@ -35,6 +35,7 @@ public:
     void update();
 
     bool isDone() const noexcept;
+    void close();
     bool isFullscreen();
     sf::RenderWindow& renderWindow() noexcept;
 
@@ -48,6 +49,7 @@ private:
     void setup(const std::string &title);
     void create();
     void destroy();
+    void onKeyPressed(const sf::Event::KeyEvent &key);
 
 private:
     sf::RenderWindow m_window;

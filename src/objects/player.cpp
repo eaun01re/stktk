@@ -3,7 +3,7 @@
 #include <random>
 
 #include "log.h"
-#include "math.h"
+#include "math/math.h"
 #include "objects/object.h"
 #include "resource_loader.h"
 

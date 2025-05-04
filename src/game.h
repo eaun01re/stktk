@@ -1,8 +1,10 @@
 #pragma once
 
 
+#include <memory>
+
 #include "window.h"
-#include "world.h"
+#include "start.h"
 
 
 class Game final
@@ -11,7 +13,7 @@ public:
     explicit Game();
 
     bool init();
-    void reset(
+    void start(
         const std::uint8_t cranesQuantity = 1,
         const std::optional<unsigned int> &position = std::nullopt);
     void handleInput();
@@ -23,15 +25,18 @@ public:
     void restartClock();
 
 private:
+    std::unique_ptr<Start> makeStartScreen(const std::uint8_t cranesQuantity);
     void onWindowResized(const sf::Vector2u &size);
     void onKeyPressed(const sf::Event::KeyEvent &key);
     void onKeyReleased(const sf::Event::KeyEvent &key);
+    void onStartScreenClosed(const std::optional<Start::Config> &config);
     void renderClippingMask(sf::RenderTarget &target);
+    void exit();
 
 private:
     Window m_window;
 
-    std::unique_ptr<World> m_world;
+    std::unique_ptr<Screen> m_screen;
 
     /// Маска из двух прямоугольников по бокам, прикрывающая объекты,
     /// выходящие за пределывиртуального экрана.
@@ -47,6 +52,5 @@ private:
 #endif
     Duration m_elapsed;
 
-    mutable std::mt19937 m_randomEngine;
-    mutable std::uniform_int_distribution<std::mt19937::result_type> m_distribution;
+    std::optional<unsigned int> m_initialPosition;
 };

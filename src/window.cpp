@@ -28,7 +28,7 @@ Window::Window(
 
 Window::~Window()
 {
-    destroy();
+    close();
 }
 
 
@@ -64,6 +64,18 @@ void Window::destroy()
 }
 
 
+void Window::onKeyPressed(const sf::Event::KeyEvent &key)
+{
+    if (key.code == sf::Keyboard::F5)
+    {
+        toggleFullscreen();
+        return;
+    }
+
+    m_keyPressCallback(key);
+}
+
+
 void Window::beginDraw()
 {
     m_window.clear(BACKGROUND_COLOR);
@@ -79,6 +91,13 @@ void Window::endDraw()
 bool Window::isDone() const noexcept
 {
     return m_isDone;
+}
+
+
+void Window::close()
+{
+    destroy();
+    m_isDone = true;
 }
 
 
@@ -155,14 +174,7 @@ void Window::update()
             }
             break;
         case sf::Event::KeyPressed:
-            if (m_keyPressCallback)
-            {
-                m_keyPressCallback(event.key);
-            }
-//            if (event.key.code == sf::Keyboard::F5)
-//            {
-//                toggleFullscreen();
-//            }
+            onKeyPressed(event.key);
             break;
         case sf::Event::KeyReleased:
             if (m_keyReleaseCallback)

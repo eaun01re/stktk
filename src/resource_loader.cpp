@@ -12,6 +12,7 @@ const std::filesystem::path RESOURCES_DIR("resources");
 const std::filesystem::path PATH_GRAPHICS = RESOURCES_DIR / "graphics";
 const std::filesystem::path PATH_AUDIO = RESOURCES_DIR / "audio";
 
+const std::string TEXTURE_SPLASH("splash.png");
 const std::string TEXTURE_BACKGROUND("background.png");
 const std::string TEXTURE_BOX("box.png");
 const std::string TEXTURE_CRANE("crane.png");
@@ -41,6 +42,7 @@ ResourceLoader& ResourceLoader::instance()
 bool ResourceLoader::load()
 {
     const bool result =
+        loadTexture(TextureId::Splash, TEXTURE_SPLASH) &&
         loadTexture(TextureId::Box, TEXTURE_BOX) &&
         loadTexture(TextureId::Player, TEXTURE_PLAYER) &&
         loadTexture(TextureId::Background, TEXTURE_BACKGROUND) &&
@@ -89,7 +91,7 @@ bool ResourceLoader::loadTexture(
     const std::string &file)
 {
     std::shared_ptr<sf::Texture> texture = std::make_shared<sf::Texture>();
-    const bool ok = texture->loadFromFile(PATH_GRAPHICS / file);
+    const bool ok = texture->loadFromFile((PATH_GRAPHICS / file).string());
     if (!ok)
     {
         LOG_ERROR("Could not load resource \"" << file << "\".");
@@ -105,7 +107,7 @@ bool ResourceLoader::loadSound(
     const std::string &file)
 {
     std::shared_ptr<sf::SoundBuffer> soundBuffer = std::make_shared<sf::SoundBuffer>();
-    const bool ok = soundBuffer->loadFromFile(PATH_AUDIO / file);
+    const bool ok = soundBuffer->loadFromFile((PATH_AUDIO / file).string());
     if (!ok)
     {
         LOG_ERROR("Could not load resource \"" << file << "\".");

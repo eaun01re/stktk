@@ -9,6 +9,7 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "screen.h"
 #include "objects/box.h"
 #include "objects/crane.h"
 #include "objects/player.h"
@@ -27,19 +28,20 @@ constexpr std::size_t MAX_CRANES_QUANTITY = 5;
 struct InitialPosition;
 
 
-class World final
+class World final : public Screen
 {
 public:
     explicit World();
     void start(
         std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
-    void update(const Duration &elapsed);
+    void update(const Duration &elapsed) override;
+    void handleKeyPressed(const sf::Keyboard::Key key) override;
+    void handleKeyReleased(const sf::Keyboard::Key key) override;
+    void render(sf::RenderTarget &target) override;
+
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
-    void render(sf::RenderTarget &target);
-    void handleKeyPressed(sf::Keyboard::Key key);
-    void handleKeyReleased(sf::Keyboard::Key key);
     void togglePause();
     unsigned int score() const noexcept;
 

@@ -1,7 +1,7 @@
 #include "number.h"
 
-#include "math.h"
 #include "consts.h"
+#include "math/math.h"
 #include "resource_loader.h"
 
 

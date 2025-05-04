@@ -13,7 +13,7 @@ struct InitialPosition
 
 const std::vector<InitialPosition> INITIAL_POSITIONS
 {
-    InitialPosition{ 4, { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 } },
+    InitialPosition{ 3, { 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1 } },
     InitialPosition{ 4, { 0, 0, 1, 2, 1, 2, 0, 0, 0, 0, 0, 0 } },
     InitialPosition{ 5, { 0, 0, 0, 1, 2, 3, 2, 1, 0, 0, 0, 0 } },
     InitialPosition{ 2, { 0, 3, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5 } },

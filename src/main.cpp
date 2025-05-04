@@ -20,7 +20,6 @@
 /// а пролетает на одну клетку дальше! как только ящик после толчка оказывается в воздухе его можно успеть толкнуть
 /// В момент толчка ящик ненадолго зависает в воздухе, после чего продолжает падать с замедленной скоростью
 /// https://www.youtube.com/watch?v=6PaLFAZN518&t=75
-/// Можно сбивать ящик прыжком по диагонали.
 
 
 std::optional<unsigned int> positionNumber(const char *string)
@@ -54,7 +53,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     const std::optional<unsigned int> position = argc > 1 ? positionNumber(argv[1]) : std::nullopt;
-    game.reset(3, position);
+    game.start(1, position);
     while (!game.window().isDone())
     {
         game.restartClock();

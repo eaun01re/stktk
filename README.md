@@ -28,18 +28,22 @@ Stack Attack — аркадная игра, симулятор грузчика 
 
 ## Зависимости
 
-* C++11
-* [SFML](https://www.sfml-dev.org/) 2.6.2
+* C++17
+* [SFML](https://www.sfml-dev.org/) v2
 
-    Debian
-    ```sh
-    sudo apt-get install libsfml-dev
-    ```
+  Debian
+  ```sh
+  sudo apt-get install libsfml-dev
+  ```
 
-    RHEL
-    ```sh
-    sudo dnf install SFML-devel
-    ```
+  RHEL
+  ```sh
+  sudo dnf install SFML-devel
+  ```
+
+  Windows  
+  Скачать `https://www.sfml-dev.org/files/SFML-2.6.2-windows-vc16-64-bit.zip` и распаковать.
+  Добавить к переменной окружения `CMAKE_PREFIX_PATH` путь распакованному содержимому архива.
 * [CMake](https://cmake.org)
 
 ## Похожие проекты

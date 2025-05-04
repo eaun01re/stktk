@@ -5,7 +5,7 @@
 
 #include "initial_position.h"
 #include "log.h"
-#include "math.h"
+#include "math/math.h"
 #include "objects/hourglass.h"
 #include "objects/number.h"
 
@@ -237,7 +237,7 @@ void World::render(sf::RenderTarget &target)
 }
 
 
-void World::handleKeyPressed(sf::Keyboard::Key key)
+void World::handleKeyPressed(const sf::Keyboard::Key key)
 {
     if (!m_player.alive())
     {
@@ -264,7 +264,7 @@ void World::handleKeyPressed(sf::Keyboard::Key key)
 }
 
 
-void World::handleKeyReleased(sf::Keyboard::Key key)
+void World::handleKeyReleased(const sf::Keyboard::Key key)
 {
     const Player::Direction requestedDirection = directionByKey(key);
     if (requestedDirection == Player::Direction::None)
@@ -516,7 +516,6 @@ void World::resetCrane(Crane &crane, float offsetLength)
         0,
         m_boxesStatic.size() - 1);
     crane.setDropColumn(distributionColumn(m_randomEngine));
-    crane.setDropColumn(2);
 
     if (!crane.isLoaded())
     {
@@ -990,6 +989,7 @@ bool World::updateBox(Box &box, const Duration &elapsed)
         box.blow();
         if (m_player.alive())
         {
+            // NOTE: Можно сбивать ящик прыжком по диагонали.
             if (!(m_player.direction() & Player::Direction::Up))
             {
                 // Ящик упал на игрока, не находящегося в прыжке => конец игры.

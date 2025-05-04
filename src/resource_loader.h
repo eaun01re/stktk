@@ -18,6 +18,7 @@ class ResourceLoader final
 public:
     enum TextureId : std::uint8_t
     {
+        Splash,
         Player,
         Box,
         Crane,

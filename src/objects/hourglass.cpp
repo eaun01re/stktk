@@ -1,8 +1,8 @@
 #include "hourglass.h"
 
-#include "math.h"
 #include "consts.h"
 #include "resource_loader.h"
+#include "math/math.h"
 
 
 Hourglass::Hourglass()

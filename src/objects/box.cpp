@@ -1,10 +1,9 @@
 #include "box.h"
 
-#include <cmath>
 #include <random>
 #include <limits>
 
-#include "math.h"
+#include "math/math.h"
 #include "resource_loader.h"
 
 
