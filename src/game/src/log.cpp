@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <game/log.h>
+#include <game/clock.h>
 
 
 namespace
@@ -26,7 +27,7 @@ void write(
     std::ignore = functionName;
 
     stream
-        << Log::formatTime() << ' '
+        << formatTime() << ' '
         << std::setw(7) << std::left << severity << ": "
         << message
         << std::endl << std::flush;
@@ -48,7 +49,7 @@ void checkLogSize(const std::string &filename, const int sizeMax = MAX_LOG_SIZE)
     {
         std::filesystem::rename(
             filename,
-            filename + "_upto_" + Log::formatTimeEscaped());
+            filename + "_upto_" + formatTimeEscaped());
     }
 }
 
@@ -70,20 +71,6 @@ Log& Log::instance()
 {
     static Log singleton;
     return singleton;
-}
-
-
-std::string Log::formatTime(const Timepoint &timepoint, const char *format)
-{
-    const auto time = std::chrono::system_clock::to_time_t(timepoint);
-    char buffer[32];
-    const std::size_t size = std::strftime(buffer, sizeof(buffer), format, std::localtime(&time));
-    return std::string(buffer, size);
-}
-
-std::string Log::formatTimeEscaped(const Timepoint &timepoint)
-{
-    return formatTime(timepoint, "%Y-%d-%m_%H-%M-%S");
 }
 
 

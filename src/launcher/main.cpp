@@ -2,6 +2,54 @@
 #include <game/log.h>
 #include <game/version/version.h>
 
+#ifdef BUILD_WITH_WINDOWSCRASHDUMP
+#include <Windows.h>
+#include <DbgHelp.h>
+
+#include <game/clock.h>
+
+LONG WINAPI customUnhandledExceptionFilter(PEXCEPTION_POINTERS pExInfo)
+{
+    const std::string fileName =
+        "crashdump_" + formatTimeEscaped()
+        + "_" + ProjectVersion + ".dmp";
+    LOG_FATAL(fileName)
+
+    HANDLE hFile = CreateFile(
+        fileName.c_str(),
+        GENERIC_WRITE,
+        0,
+        nullptr,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr);
+    if (nullptr == hFile || INVALID_HANDLE_VALUE == hFile)
+    {
+        LOG_FATAL("Unhandled Exception. hFile = " << unsigned(hFile) << '.');
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+    MINIDUMP_EXCEPTION_INFORMATION eInfo;
+    eInfo.ThreadId = GetCurrentThreadId();
+    eInfo.ExceptionPointers = pExInfo;
+    eInfo.ClientPointers = FALSE;
+
+    const MINIDUMP_TYPE minidumpType = _MINIDUMP_TYPE::MiniDumpWithFullMemory;
+    MiniDumpWriteDump(
+        GetCurrentProcess(),
+        GetCurrentProcessId(),
+        hFile,
+        minidumpType,
+        &eInfo,
+        nullptr,
+        nullptr);
+    CloseHandle(hFile);
+
+    LOG_FATAL("Unhandled Exception. See " << fileName);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif // BUILD_WITH_WINDOWSCRASHDUMP
+
 
 std::optional<unsigned int> positionNumber(const char *string)
 {
@@ -26,6 +74,12 @@ int main(int argc, char *argv[])
     // Если необходимо записывать лог в файл.
     // Log::instance().setPath(".");
     LOG_INFO("--- Starting " << ProjectName << ' ' << ProjectVersion << " ---");
+
+#ifdef BUILD_WITH_WINDOWSCRASHDUMP
+    const LPTOP_LEVEL_EXCEPTION_FILTER hOldFilter =
+        SetUnhandledExceptionFilter(customUnhandledExceptionFilter);
+    std::ignore = hOldFilter;
+#endif // BUILD_WITH_WINDOWSCRASHDUMP
 
     Game game;
     if (!game.init())

@@ -50,6 +50,7 @@ void Window::create()
     const sf::Uint32 style = m_isFullscreen
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
+    // FIXME: Падает при Release With Debug Info сборке на Windows.
     m_window.create(
         sf::VideoMode(m_windowSize.x, m_windowSize.y),
         m_windowTitle,

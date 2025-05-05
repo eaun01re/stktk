@@ -21,9 +21,18 @@ add_executable(
     ${PROJECT_SOURCE_FILES}
     ${PROJECT_RESOURCE_FILES})
 
+if(MSVC)
+    option(BUILD_WITH_WINDOWSCRASHDUMP "Build game launcher with creating windows crash dump" OFF)
+    if(BUILD_WITH_WINDOWSCRASHDUMP)
+        add_definitions(-DBUILD_WITH_WINDOWSCRASHDUMP)
+        set(BUILD_WITH_WINDOWSCRASHDUMP_LIB dbghelp)
+    endif()
+endif(MSVC)
+
 # Link.
 target_link_libraries(
     ${PROJECT_NAME}
-    game)
+    game
+    ${BUILD_WITH_WINDOWSCRASHDUMP_LIB})
 
 add_dependencies(${PROJECT_NAME} game)

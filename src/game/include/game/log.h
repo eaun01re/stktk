@@ -26,19 +26,6 @@ public:
 
 public:
     static const std::map<Log::Severity, std::string> SEVERITY_DESCRIPTIONS;
-    /*!
-     * Converts the specified time point to a human-readable format.
-     * \param[in] timepoint The time point to convert.
-     * \param[in] format Pointer to a null-terminated multibyte character
-     * string specifying the format of conversion.
-     * \return The string representation of time point
-     * in yyyy-MM-dd_HH:mm:ss format.
-     */
-    static std::string formatTime(
-        const Timepoint &timepoint = std::chrono::system_clock::now(),
-        const char* format = "%Y.%d.%m %H:%M:%S");
-    static std::string formatTimeEscaped(
-        const Timepoint &timepoint = std::chrono::system_clock::now());
 
 
 public:
