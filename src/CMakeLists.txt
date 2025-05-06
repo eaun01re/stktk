@@ -5,8 +5,9 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Declare project.
 project(stktk VERSION 0.1)
-add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
-add_definitions(-DPROJECT_NAME_FULL="${PROJECT_NAME}")
+set(PROJECT_DISPLAY_NAME "${PROJECT_NAME}")
+add_definitions(-DPROJECT_NAME="${PROJECT_DISPLAY_NAME}")
+add_definitions(-DPROJECT_NAME_FULL="${PROJECT_DISPLAY_NAME}")
 add_definitions(-DPROJECT_COMPANY_NAME="bls")
 add_definitions(-DPROJECT_LEGAL_COPYRIGHT="© 2025 bls")
 add_definitions(-DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
