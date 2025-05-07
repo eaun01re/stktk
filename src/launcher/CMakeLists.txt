@@ -31,7 +31,7 @@ endif(MSVC)
 
 # Add target.
 add_executable(
-    ${EXECUTABLE_NAME}
+    ${EXECUTABLE_NAME} WIN32
     ${PROJECT_SOURCE_FILES}
     ${PROJECT_RESOURCE_FILES})
 

@@ -1,4 +1,3 @@
-#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -10,11 +9,13 @@
 namespace
 {
 
-const std::string LOG_FILENAME = "log";
-constexpr int MAX_LOG_SIZE = 1024 * 1024 * 9;
+const std::string LOG_FILE_NAME = "log";
+const std::string LOG_FILE_EXTENSION = ".txt";
+constexpr unsigned int CHECK_LOG_SIZE_PERIOD = 100;
+constexpr std::uintmax_t MAX_LOG_SIZE = 1024 * 1024 * 9; // Bytes.
 
 
-void write(
+void writeToStream(
     std::ostream &stream,
     const std::string &message,
     const Log::Severity severity,
@@ -28,42 +29,41 @@ void write(
 
     stream
         << formatTime() << ' '
-        << std::setw(7) << std::left << severity << ": "
+        << std::setw(7) << std::right << severity << ": "
         << message
         << std::endl << std::flush;
 }
 
 
-std::string makeLogFilename(const std::filesystem::path &path)
+std::filesystem::path makeLogFilename(const std::filesystem::path &path)
 {
-    return (path / std::filesystem::path(LOG_FILENAME)).string();
+    return path / std::filesystem::path(LOG_FILE_NAME + LOG_FILE_EXTENSION);
 }
 
 
-void checkLogSize(const std::string &filename, const int sizeMax = MAX_LOG_SIZE)
+void checkLogSize(const std::filesystem::path &filename)
 {
-    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-    const int size = in.tellg();
-    in.close();
-    if (size >= sizeMax)
+    const std::uintmax_t size = std::filesystem::file_size(filename);
+    if (size >= MAX_LOG_SIZE)
     {
         std::filesystem::rename(
             filename,
-            filename + "_upto_" + formatTimeEscaped());
+            LOG_FILE_NAME + "_upto_" + formatTimeEscaped()
+                + LOG_FILE_EXTENSION);
     }
 }
 
 }
 
 
-const std::map<Log::Severity, std::string> Log::SEVERITY_DESCRIPTIONS =
+const std::array<std::string, Log::Severity::Fatal + 1> Log::SEVERITY_DESCRIPTIONS =
 {
-    { Log::Severity::Trace, "Trace" },
-    { Log::Severity::Debug, "Debug" },
-    { Log::Severity::Info, "Info" },
-    { Log::Severity::Warning, "Warning" },
-    { Log::Severity::Error, "Error" },
-    { Log::Severity::Fatal, "Fatal" }
+    "Trace",
+    "Debug",
+    "Info",
+    "Warning",
+    "Error",
+    "Fatal"
 };
 
 
@@ -74,9 +74,15 @@ Log& Log::instance()
 }
 
 
-void Log::setPath(std::optional<std::filesystem::path> path)
+void Log::setPath(const std::optional<std::filesystem::path> &path)
 {
-    m_path = std::move(path);
+    if (!path.has_value())
+    {
+        m_filename = std::nullopt;
+        return;
+    }
+
+    m_filename = makeLogFilename(path.value());
 }
 
 
@@ -87,30 +93,42 @@ void Log::write(
     const int line,
     const std::string &functionName)
 {
-    std::ignore = file;
-    std::ignore = line;
-    std::ignore = functionName;
-
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    std::ostream &stream = severity <= Log::Severity::Warning ? std::cout : std::cerr;
-    ::write(stream, message, severity, file, line, functionName);
+    std::ostream &stream = severity <= Log::Severity::Warning
+        ? std::cout
+        : std::cerr;
+    writeToStream(stream, message, severity, file, line, functionName);
 
-    if (m_path.has_value())
-    {
-        if (m_filename.empty())
-        {
-            m_filename = makeLogFilename(m_path.value());
-        }
-        checkLogSize(m_filename);
-        std::ofstream fstream(m_filename, std::ios::app);
-        ::write(fstream, message, severity, file, line, functionName);
-        fstream.close();
-    }
+    writeToFile(message, severity, file, line, functionName);
 }
 
 
 Log::~Log()
 {
-    // write("Exiting program.", Log::Severity::Info);
+}
+
+
+void Log::writeToFile(
+    const std::string &message,
+    const Log::Severity severity,
+    const std::string &file,
+    const int line,
+    const std::string &functionName)
+{
+    if (!m_filename.has_value())
+    {
+        return;
+    }
+
+    if (CHECK_LOG_SIZE_PERIOD == 0 ||
+        ++m_lastLogSizeCheck == CHECK_LOG_SIZE_PERIOD)
+    {
+        checkLogSize(m_filename.value());
+        m_lastLogSizeCheck = 0;
+    }
+
+    std::ofstream fstream(m_filename.value(), std::ios::app);
+    writeToStream(fstream, message, severity, file, line, functionName);
+    fstream.close();
 }

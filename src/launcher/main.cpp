@@ -2,6 +2,7 @@
 #include <game/log.h>
 #include <game/version/version.h>
 
+
 #ifdef BUILD_WITH_WINDOWSCRASHDUMP
 #include <Windows.h>
 #include <DbgHelp.h>
@@ -71,8 +72,9 @@ std::optional<unsigned int> positionNumber(const char *string)
 
 int main(int argc, char *argv[])
 {
-    // Если необходимо записывать лог в файл.
-    // Log::instance().setPath(".");
+    // Включение записи лога в файл.
+    Log::instance().setPath(".");
+
     LOG_INFO("--- Starting " << ProjectName << ' ' << ProjectVersion << " ---");
 
 #ifdef BUILD_WITH_WINDOWSCRASHDUMP
@@ -82,7 +84,11 @@ int main(int argc, char *argv[])
 #endif // BUILD_WITH_WINDOWSCRASHDUMP
 
     Game game;
-    if (!game.init())
+    if (game.init())
+    {
+        LOG_INFO("All resources loaded.");
+    }
+    else
     {
         LOG_ERROR("Failed to initialize application.");
         return 1;
@@ -110,6 +116,10 @@ int WINAPI WinMain(
     LPSTR lpszCmdLine,
     int nCmdShow)
 {
+    std::ignore = hInst;
+    std::ignore = hPrev;
+    std::ignore = lpszCmdLine;
+    std::ignore = nCmdShow;
     return main(__argc, __argv);
 }
 #endif

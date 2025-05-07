@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.15.0)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -27,6 +27,12 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif()
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+
+    # Statically link the runtime libraries.
+    # Not actually required since it doesn't link api-ms-win-core* libraries!
+    # https://stackoverflow.com/a/54501156
+    # https://social.msdn.microsoft.com/Forums/en-US/a28331ae-19a3-4a34-b3ba-1e8fd4430375/missing-apimswincore-dlls
+    #set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>") # Since 3.15.0
 endif(MSVC)
 
 add_subdirectory(game)

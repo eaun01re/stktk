@@ -1,9 +1,8 @@
 #pragma once
 
 
-#include <chrono>
+#include <array>
 #include <filesystem>
-#include <map>
 #include <mutex>
 #include <optional>
 #include <sstream>
@@ -12,21 +11,18 @@
 class Log final
 {
 public:
-    enum Severity
+    enum Severity : std::uint8_t
     {
-        Trace,
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Fatal
+        Trace = 0,
+        Debug = 1,
+        Info = 2,
+        Warning = 3,
+        Error = 4,
+        Fatal = 5
     };
-    using Timepoint = std::chrono::time_point<std::chrono::system_clock>;
-
 
 public:
-    static const std::map<Log::Severity, std::string> SEVERITY_DESCRIPTIONS;
-
+    static const std::array<std::string, Severity::Fatal + 1> SEVERITY_DESCRIPTIONS;
 
 public:
     /*!
@@ -35,7 +31,7 @@ public:
      */
     static Log& instance();
 
-    void setPath(std::optional<std::filesystem::path> filename);
+    void setPath(const std::optional<std::filesystem::path> &path);
 
     /*!
      * Writes the specified message to log.
@@ -52,7 +48,6 @@ public:
         const int line = 0,
         const std::string &functionName = std::string());
 
-
 private:
     // Singleton part.
     Log(){}
@@ -62,22 +57,29 @@ private:
     Log& operator=(Log&&) = delete;
     Log& operator=(const Log&) = delete;
 
+private:
+    void writeToFile(
+        const std::string &message,
+        const Severity severity,
+        const std::string &file,
+        const int line,
+        const std::string &functionName);
 
 private:
-    mutable std::mutex m_mutex;
     /// The name of the file with log.
-    std::optional<std::filesystem::path> m_path;
-    std::string m_filename;
+    std::optional<std::filesystem::path> m_filename;
+    unsigned int m_lastLogSizeCheck{ 0 };
+    mutable std::mutex m_mutex;
 };
 
 
 inline std::ostream& operator<<(std::ostream &stream, Log::Severity severity)
 {
-    const auto it = Log::SEVERITY_DESCRIPTIONS.find(severity);
-    const std::string severityStr = (it != Log::SEVERITY_DESCRIPTIONS.cend())
-        ? it->second
-        : "";
-    return stream << severityStr;
+    if (severity <= Log::Severity::Fatal)
+    {
+        stream << Log::SEVERITY_DESCRIPTIONS[severity];
+    }
+    return stream;
 }
 
 
