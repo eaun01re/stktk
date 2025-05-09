@@ -104,11 +104,6 @@ void Log::write(
 }
 
 
-Log::~Log()
-{
-}
-
-
 void Log::writeToFile(
     const std::string &message,
     const Log::Severity severity,

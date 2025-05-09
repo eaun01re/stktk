@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     const std::optional<unsigned int> position = argc > 1 ? positionNumber(argv[1]) : std::nullopt;
-    game.start(1, position);
+    game.start(position);
     while (!game.window().isDone())
     {
         game.restartClock();

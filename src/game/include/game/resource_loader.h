@@ -24,7 +24,7 @@ public:
         Crane,
         Background,
         Foreground,
-        Digits,
+        Font,
         Frame,
         Hourglass
     };

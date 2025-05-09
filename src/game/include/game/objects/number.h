@@ -3,16 +3,18 @@
 
 #include <SFML/Graphics.hpp>
 
-#include <game/objects/figure.h>
+#include <memory>
+
+#include <game/menu/text.h>
 
 
-class Number final : public Figure
+class Number final : public sf::Drawable
 {
 public:
     explicit Number(unsigned int value = 1);
-    void render(
+    void draw(
         sf::RenderTarget &target,
-        const sf::Transform &transform) const override;
+        sf::RenderStates states) const override;
     void setPosition(const sf::Vector2f &position);
     const sf::Vector2f& position() const noexcept;
     void set(unsigned int value);
@@ -23,8 +25,7 @@ private:
 
 private:
     sf::Sprite m_frame;
-    std::vector<sf::Sprite> m_digits;
-    sf::Texture m_textureDigits;
+    Text m_text;
 };
 
 

@@ -38,12 +38,16 @@ const unsigned int GAME_REGION_WIDTH = SCREEN_SIZE.x - BOTTOM_LEFT_CORNER.x;
 const unsigned int DROP_BOX_SCORE = 2;
 /// Множитель количества очков, начиляемых за заполнение нижнего ряда.
 const unsigned int BLOW_BOTTOM_ROW_SCORE_MULTIPLIER = 10;
-/// Положение окна, отображающего текущий счёт игры.
-const sf::Vector2f SCORE_POSITION_PAUSED(22, 9);
-/// Положение окна, отображающего итоговый счёт игры.
-const sf::Vector2f SCORE_POSITION_STOPPED(22, 19);
-/// Положение песочных часов, отображаемых во время паузы.
-const sf::Vector2f HOURGLASS_POSITION(40, 27);
+
+/// Положение окна, отображающего текущий счёт игры
+/// относительно левого верхнего угла.
+const sf::Vector2f SCORE_POSITION_PAUSED(26, 34);
+/// Положение окна, отображающего итоговый счёт игры
+/// относительно левого верхнего угла.
+const sf::Vector2f SCORE_POSITION_STOPPED(26, 24);
+/// Положение песочных часов, отображаемых во время паузы
+/// относительно левого верхнего угла.
+const sf::Vector2f HOURGLASS_POSITION(44, 12);
 
 sf::Vector2f craneStartPosition(
     bool left,
@@ -192,45 +196,48 @@ void World::movePlayer(const Player::Direction direction)
 }
 
 
-void World::render(sf::RenderTarget &target)
+void World::draw(sf::RenderTarget& target, sf::RenderStates) const
 {
     target.draw(m_background);
 
-    // Отображение кранов и их ящиков.
-    for (const CranePtr &crane : m_cranes)
+    // Отрисковка в преобразованной системе координат.
     {
-        if (crane != nullptr)
+        // Отображение кранов и их ящиков.
+        for (const CranePtr &crane : m_cranes)
         {
-            renderCrane(*crane, target);
-        }
-    }
-
-    // Отображение свободных ящиков.
-    for (auto &column : m_boxesStatic)
-    {
-        for (const Object::Id boxId : column)
-        {
-            if (boxId == NULL_ID)
+            if (crane != nullptr)
             {
-                break;
+                renderCrane(*crane, target);
             }
+        }
+
+        // Отображение свободных ящиков.
+        for (auto &column : m_boxesStatic)
+        {
+            for (const Object::Id boxId : column)
+            {
+                if (boxId == NULL_ID)
+                {
+                    break;
+                }
+                const BoxPtr &box = m_boxes.at(boxId);
+                target.draw(*box, m_transform);
+            }
+        }
+        for (const Object::Id boxId : m_boxesMoving)
+        {
             const BoxPtr &box = m_boxes.at(boxId);
             target.draw(*box, m_transform);
         }
-    }
-    for (const Object::Id boxId : m_boxesMoving)
-    {
-        const BoxPtr &box = m_boxes.at(boxId);
-        target.draw(*box, m_transform);
-    }
 
-    // Отображение игрока.
-    target.draw(m_player, m_transform);
+        // Отображение игрока.
+        target.draw(m_player, m_transform);
+    }
 
     // Отображение счёта.
     for (const auto &figure : m_scoreFigures)
     {
-        figure->render(target, m_transform);
+        target.draw(*figure);
     }
 
     // Отображение переднего плана.
@@ -238,7 +245,7 @@ void World::render(sf::RenderTarget &target)
 }
 
 
-void World::handleKeyPressed(const sf::Keyboard::Key key)
+bool World::handleKeyPressed(const sf::Keyboard::Key key)
 {
     if (!m_player.alive())
     {
@@ -246,22 +253,24 @@ void World::handleKeyPressed(const sf::Keyboard::Key key)
         {
             // FIXME: Начинать новую игру на изначально выбранном уровне.
             start(1);
+            return true;
         }
-        return;
+        return false;
     }
 
     if (key == KEY_PAUSE || key == KEY_PAUSE2)
     {
         togglePause();
-        return;
+        return true;
     }
 
     const Player::Direction requestedDirection = directionByKey(key);
     if (requestedDirection == Player::Direction::None)
     {
-        return;
+        return false;
     }
     requestMovePlayer(requestedDirection);
+    return true;
 }
 
 

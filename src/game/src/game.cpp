@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include <game/config.h>
 #include <game/log.h>
 #include <game/world.h>
 #include <game/resource_loader.h>
@@ -48,21 +49,18 @@ void Game::restartClock()
 }
 
 
-std::unique_ptr<Start> Game::makeStartScreen(const std::uint8_t cranesQuantity)
+std::unique_ptr<MenuStart> Game::makeStartScreen()
 {
-    std::unique_ptr<Start> screen = std::make_unique<Start>(
-        std::bind(&Game::onStartScreenClosed, this, std::placeholders::_1),
-        cranesQuantity);
+    std::unique_ptr<MenuStart> screen = std::make_unique<MenuStart>(
+        std::bind(&Game::onStartScreenClosed, this, std::placeholders::_1));
     return screen;
 }
 
 
-void Game::start(
-    const std::uint8_t cranesQuantity,
-    const std::optional<unsigned int> &position)
+void Game::start(const std::optional<unsigned int> &position)
 {
     m_initialPosition = position;
-    m_screen = makeStartScreen(cranesQuantity);
+    m_screen = makeStartScreen();
 }
 
 
@@ -93,16 +91,17 @@ void Game::onKeyReleased(const sf::Event::KeyEvent &key)
 }
 
 
-void Game::onStartScreenClosed(const std::optional<Start::Config> &config)
+void Game::onStartScreenClosed(bool start)
 {
-    if (!config.has_value())
+    if (!start)
     {
         exit();
         return;
     }
 
     std::unique_ptr<World> worldScreen = std::make_unique<World>();
-    worldScreen->start(config.value().cranesQuantity, m_initialPosition);
+    const Config &config = Config::instance();
+    worldScreen->start(config.cranesQuantity, m_initialPosition);
     m_screen = std::move(worldScreen);
 }
 
@@ -126,7 +125,7 @@ void Game::render()
     m_window.beginDraw();
 
     sf::RenderWindow& target = m_window.renderWindow();
-    m_screen->render(target);
+    target.draw(*m_screen);
     renderClippingMask(target);
 
     // Display.

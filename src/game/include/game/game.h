@@ -18,9 +18,10 @@
 
 
 #include <memory>
+#include <optional>
 
-#include "window.h"
-#include "start.h"
+#include <game/menu/menu_start.h>
+#include <game/window.h>
 
 
 class Game final
@@ -29,9 +30,7 @@ public:
     explicit Game();
 
     bool init();
-    void start(
-        const std::uint8_t cranesQuantity = 1,
-        const std::optional<unsigned int> &position = std::nullopt);
+    void start(const std::optional<unsigned int> &position = std::nullopt);
     void handleInput();
     void update();
     void render();
@@ -41,11 +40,11 @@ public:
     void restartClock();
 
 private:
-    std::unique_ptr<Start> makeStartScreen(const std::uint8_t cranesQuantity);
+    std::unique_ptr<MenuStart> makeStartScreen();
     void onWindowResized(const sf::Vector2u &size);
     void onKeyPressed(const sf::Event::KeyEvent &key);
     void onKeyReleased(const sf::Event::KeyEvent &key);
-    void onStartScreenClosed(const std::optional<Start::Config> &config);
+    void onStartScreenClosed(bool start);
     void renderClippingMask(sf::RenderTarget &target);
     void exit();
 

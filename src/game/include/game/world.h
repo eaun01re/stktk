@@ -13,7 +13,6 @@
 #include "objects/box.h"
 #include "objects/crane.h"
 #include "objects/player.h"
-#include "objects/figure.h"
 #include "resource_loader.h"
 
 
@@ -36,9 +35,11 @@ public:
         std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
     void update(const Duration &elapsed) override;
-    void handleKeyPressed(const sf::Keyboard::Key key) override;
+    bool handleKeyPressed(const sf::Keyboard::Key key) override;
     void handleKeyReleased(const sf::Keyboard::Key key) override;
-    void render(sf::RenderTarget &target) override;
+    void draw(
+        sf::RenderTarget& target,
+        sf::RenderStates states) const override;
 
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
@@ -200,7 +201,7 @@ private:
     /// Количество заработанных очков.
     unsigned int m_score{ 0 };
     /// Графические примитивы, используемые для отображения очков.
-    std::vector<FigurePtr> m_scoreFigures;
+    std::vector<std::shared_ptr<sf::Drawable>> m_scoreFigures;
 
     bool m_paused{ true };
 

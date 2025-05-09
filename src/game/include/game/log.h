@@ -51,7 +51,7 @@ public:
 private:
     // Singleton part.
     Log(){}
-    ~Log();
+    ~Log() = default;
     Log(const Log&) = delete;
     Log(Log&&) = delete;
     Log& operator=(Log&&) = delete;
