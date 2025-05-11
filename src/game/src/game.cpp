@@ -20,9 +20,7 @@ Game::Game()
         std::bind(&Game::onKeyPressed, this, std::placeholders::_1),
         std::bind(&Game::onKeyReleased, this, std::placeholders::_1))
 {
-    restartClock();
-    m_maskLeft.setFillColor(sf::Color::Black);
-    m_maskRight.setFillColor(sf::Color::Black);
+    setup();
 }
 
 
@@ -49,9 +47,18 @@ void Game::restartClock()
 }
 
 
-std::unique_ptr<MenuStart> Game::makeStartScreen()
+void Game::setup()
 {
-    std::unique_ptr<MenuStart> screen = std::make_unique<MenuStart>(
+    restartClock();
+
+    m_maskLeft.setFillColor(sf::Color::Black);
+    m_maskRight.setFillColor(sf::Color::Black);
+}
+
+
+std::shared_ptr<MenuStart> Game::makeStartScreen()
+{
+    std::shared_ptr<MenuStart> screen = std::make_shared<MenuStart>(
         std::bind(&Game::onStartScreenClosed, this, std::placeholders::_1));
     return screen;
 }
@@ -70,6 +77,7 @@ void Game::onWindowResized(const sf::Vector2u &size)
     m_window.resize(size);
 
     // Обновление обрезающей области.
+    // TODO: Обрезать и по вертикали?
     const sf::Vector2f &viewSize = m_window.viewSize();
     const sf::Vector2f maskSize((viewSize.x - SCREEN_SIZE.x) / 2, viewSize.y);
     m_maskLeft.setSize(maskSize);
@@ -99,10 +107,16 @@ void Game::onStartScreenClosed(bool start)
         return;
     }
 
-    std::unique_ptr<World> worldScreen = std::make_unique<World>();
-    const Config &config = Config::instance();
-    worldScreen->start(config.cranesQuantity, m_initialPosition);
-    m_screen = std::move(worldScreen);
+    std::shared_ptr<World> worldScreen = std::make_shared<World>();
+    worldScreen->start(m_initialPosition);
+    m_screen = worldScreen;
+
+#ifndef NDEBUG
+    m_debug = ScreenDebug(worldScreen);
+#endif
+
+    m_window.enableDebugView(m_debug.has_value());
+    worldScreen->setDebugMode(m_debug.has_value());
 }
 
 
@@ -115,6 +129,10 @@ const Window& Game::window() const
 void Game::update()
 {
     m_screen->update(m_elapsed);
+    if (m_debug.has_value())
+    {
+        m_debug.value().update(m_elapsed);
+    }
     m_window.update();
 }
 
@@ -124,9 +142,15 @@ void Game::render()
     // Clear.
     m_window.beginDraw();
 
-    sf::RenderWindow& target = m_window.renderWindow();
+    sf::RenderWindow& target = m_window.gameWindow();
     target.draw(*m_screen);
     renderClippingMask(target);
+
+    if (m_debug.has_value())
+    {
+        sf::RenderWindow& targetDebug = m_window.debugWindow();
+        targetDebug.draw(m_debug.value());
+    }
 
     // Display.
     m_window.endDraw();

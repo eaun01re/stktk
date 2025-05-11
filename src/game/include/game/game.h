@@ -22,6 +22,7 @@
 
 #include <game/menu/menu_start.h>
 #include <game/window.h>
+#include <game/screen_debug.h>
 
 
 class Game final
@@ -40,7 +41,8 @@ public:
     void restartClock();
 
 private:
-    std::unique_ptr<MenuStart> makeStartScreen();
+    void setup();
+    std::shared_ptr<MenuStart> makeStartScreen();
     void onWindowResized(const sf::Vector2u &size);
     void onKeyPressed(const sf::Event::KeyEvent &key);
     void onKeyReleased(const sf::Event::KeyEvent &key);
@@ -51,7 +53,8 @@ private:
 private:
     Window m_window;
 
-    std::unique_ptr<Screen> m_screen;
+    std::shared_ptr<Screen> m_screen;
+    std::optional<ScreenDebug> m_debug;
 
     /// Маска из двух прямоугольников по бокам, прикрывающая объекты,
     /// выходящие за пределывиртуального экрана.

@@ -27,13 +27,16 @@ constexpr std::size_t MAX_CRANES_QUANTITY = 5;
 struct InitialPosition;
 
 
+// FIXME: Можно толкнуть ящик под падающий ящик, в результате чего они сольются.
 class World final : public Screen
 {
+    friend class ScreenDebug;
+
 public:
     explicit World();
     void start(
-        std::uint8_t cranesQuantity,
         const std::optional<unsigned int> &positionIndex = std::nullopt);
+    void setDebugMode(bool value);
     void update(const Duration &elapsed) override;
     bool handleKeyPressed(const sf::Keyboard::Key key) override;
     void handleKeyReleased(const sf::Keyboard::Key key) override;
@@ -104,7 +107,6 @@ private:
     void addCrane();
     std::size_t cranesQuantity() const noexcept;
     void resetCrane(Crane &crane, float offsetLength = 0);
-    void loadCrane(Crane &crane);
     void setPlayerColumn(Coordinate column);
     void movePlayer(const Player::Direction direction);
     bool canPlayerMove(
@@ -206,6 +208,9 @@ private:
     bool m_paused{ true };
 
     sf::Sound m_sound;
+
+    bool m_debugMode{ false };
+    bool m_godMode{ false };
 
     mutable std::mt19937 m_randomEngine;
 };

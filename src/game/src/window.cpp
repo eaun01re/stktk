@@ -41,7 +41,6 @@ void Window::setup(const std::string &title)
     create();
 
     m_view = sf::View(sf::FloatRect(0, 0, SCREEN_SIZE.x, SCREEN_SIZE.y));
-    m_window.setView(m_view);
 }
 
 
@@ -108,8 +107,19 @@ bool Window::isFullscreen()
 }
 
 
-sf::RenderWindow& Window::renderWindow() noexcept
+sf::RenderWindow& Window::gameWindow() noexcept
 {
+    m_window.setView(m_view);
+    return m_window;
+}
+
+
+sf::RenderWindow& Window::debugWindow() noexcept
+{
+    if (m_viewDebug.has_value())
+    {
+        m_window.setView(m_viewDebug.value());
+    }
     return m_window;
 }
 
@@ -134,7 +144,11 @@ void Window::resize(const sf::Vector2u &size)
         viewSize.y = size.y * SCREEN_SIZE.y / (size.x / ASPECT_RATIO);
     }
     m_view.setSize(viewSize.x, viewSize.y);
-    m_window.setView(m_view);
+
+    if (m_viewDebug.has_value())
+    {
+        m_viewDebug.value().setSize(size.x, size.y);
+    }
 }
 
 
@@ -155,6 +169,19 @@ void Window::toggleFullscreen()
     m_isFullscreen = !m_isFullscreen;
     destroy();
     create();
+}
+
+
+void Window::enableDebugView(bool value)
+{
+    if (!value)
+    {
+        m_viewDebug = std::nullopt;
+        return;
+    }
+
+    const sf::Vector2u windowSize = m_window.getSize();
+    m_viewDebug = sf::View(sf::FloatRect(0, 0, windowSize.x, windowSize.y));
 }
 
 

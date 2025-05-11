@@ -11,19 +11,31 @@ Duration fromMicroseconds(signed long long microseconds)
 
 
 std::string formatTime(
-    const SystemTimePoint& value,
+    const SystemTimePoint& timePoint,
     const char* format)
 {
-    const auto time = std::chrono::system_clock::to_time_t(value);
+    const time_t time = std::chrono::system_clock::to_time_t(timePoint);
     const tm *localtime = std::localtime(&time);
     char buffer[32];
+
     const std::size_t size =
         std::strftime(buffer, sizeof(buffer), format, localtime);
     return { buffer, size };
 }
 
 
-std::string formatTimeEscaped(const SystemTimePoint &timepoint)
+std::string formatTimeEscaped(const SystemTimePoint &timePoint)
 {
-    return formatTime(timepoint, "%Y-%d-%m_%H-%M-%S");
+    return formatTime(timePoint, "%Y-%d-%m_%H-%M-%S");
+}
+
+
+std::string formatTimeWithMilliseconds(const SystemTimePoint &timePoint)
+{
+    const std::string formattedTime = formatTime(timePoint);
+    const std::chrono::duration<double> timeSinceEpoch =
+        timePoint.time_since_epoch();
+    const std::chrono::milliseconds milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(timeSinceEpoch);
+    return formattedTime + '.' + std::to_string(milliseconds.count() % 1000);
 }

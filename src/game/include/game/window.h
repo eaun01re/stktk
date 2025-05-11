@@ -2,6 +2,7 @@
 
 
 #include <functional>
+#include <optional>
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -37,13 +38,19 @@ public:
     bool isDone() const noexcept;
     void close();
     bool isFullscreen();
-    sf::RenderWindow& renderWindow() noexcept;
+    sf::RenderWindow& gameWindow() noexcept;
+    sf::RenderWindow& debugWindow() noexcept;
 
+    /*!
+     * \param[in] size Размер в пикселях.
+     */
     void resize(const sf::Vector2u &size);
     sf::Vector2u windowSize() const noexcept;
     const sf::Vector2f& viewSize() const noexcept;
 
     void toggleFullscreen();
+
+    void enableDebugView(bool value);
 
 private:
     void setup(const std::string &title);
@@ -53,7 +60,12 @@ private:
 
 private:
     sf::RenderWindow m_window;
-    sf::View m_view; ///< Единицы измерения размера - пиксели игрового мира.
+
+    /// Единицы измерения размера - пиксели игрового мира.
+    sf::View m_view;
+    /// Единицы измерения размера - пиксели экрана.
+    std::optional<sf::View> m_viewDebug;
+
     sf::Vector2u m_windowSize;
     std::string m_windowTitle;
     ResizeCallback m_resizeCallback;

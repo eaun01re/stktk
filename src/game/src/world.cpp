@@ -3,6 +3,7 @@
 #include <optional>
 #include <set>
 
+#include <game/config.h>
 #include <game/initial_position.h>
 #include <game/log.h>
 #include <game/objects/hourglass.h>
@@ -18,6 +19,11 @@ constexpr sf::Keyboard::Key KEY_PAUSE = sf::Keyboard::Key::Num0;
 constexpr sf::Keyboard::Key KEY_PAUSE2 = sf::Keyboard::Key::Numpad0;
 
 constexpr sf::Keyboard::Key KEY_RESTART = sf::Keyboard::Key::Space;
+
+constexpr sf::Keyboard::Key KEY_ADD_CRANE = sf::Keyboard::Key::C;
+
+constexpr sf::Keyboard::Key KEY_GOD_MODE = sf::Keyboard::Key::G;
+
 
 /// Количество ящиков в начале игры.
 constexpr int INITIAL_BOX_QUANTITY = 12;
@@ -60,6 +66,18 @@ sf::Vector2f craneStartPosition(
             : -float(craneWidth) - offset,
         CRANE_VERTICAL_POSITION);
     return position;
+}
+
+/*!
+ * Возвращает длину пути, которую кран должен преодолеть в рамках одного цикла.
+ * NOTE: Длина должна быть такой, чтобы позволить крану плавно появляться
+ * из-за одного края игровой области и плавноц заходить за другой край.
+ * \param[in] craneWidth Ширина крана.
+ * \return Длина одного цикла курсирования крана.
+ */
+unsigned int craneCycleLength(const unsigned int craneWidth)
+{
+    return craneWidth + MAX_CRANES_QUANTITY * CRANE_INTERVAL;
 }
 
 Player::Direction directionByKey(sf::Keyboard::Key key)
@@ -107,9 +125,7 @@ World::World()
 }
 
 
-void World::start(
-    std::uint8_t cranesQuantity,
-    const std::optional<unsigned int> &positionIndex)
+void World::start(const std::optional<unsigned int> &positionIndex)
 {
     // Удаление старых объектов.
     clearObjects();
@@ -135,11 +151,17 @@ void World::start(
     setPlayerColumn(playerColumn);
     m_player.setAlive(true);
 
-    addCranes(cranesQuantity);
+    addCranes(Config::instance().cranesQuantity);
 
     m_score = 0;
     m_paused = false;
     resume();
+}
+
+
+void World::setDebugMode(bool value)
+{
+    m_debugMode = value;
 }
 
 
@@ -251,26 +273,39 @@ bool World::handleKeyPressed(const sf::Keyboard::Key key)
     {
         if (key == KEY_RESTART)
         {
-            // FIXME: Начинать новую игру на изначально выбранном уровне.
-            start(1);
+            start();
             return true;
         }
         return false;
     }
 
-    if (key == KEY_PAUSE || key == KEY_PAUSE2)
+    switch (key)
     {
+    case KEY_ADD_CRANE:
+        if (m_debugMode)
+        {
+            addCrane();
+        }
+        break;
+    case KEY_GOD_MODE:
+        m_godMode = !m_godMode;
+        break;
+    case KEY_PAUSE:
+    case KEY_PAUSE2:
         togglePause();
         return true;
+    default:
+        break;
     }
 
     const Player::Direction requestedDirection = directionByKey(key);
-    if (requestedDirection == Player::Direction::None)
+    if (requestedDirection != Player::Direction::None)
     {
-        return false;
+        requestMovePlayer(requestedDirection);
+        return true;
     }
-    requestMovePlayer(requestedDirection);
-    return true;
+
+    return false;
 }
 
 
@@ -456,6 +491,7 @@ void World::addCrane()
         return;
     }
 
+    LOG_DEBUG("Adding new crane.");
     CranePtr crane = std::make_shared<Crane>();
     // Первый кран добавляется в начале игры.
     // Он имеет нулевые индекс и смещение.
@@ -483,17 +519,19 @@ void World::addCrane()
             craneIndex = i;
             if (offset <= 0)
             {
-                // Ячейча частично видна.
+                // Ячейча не видна.
                 break;
             }
         }
-        if (craneIndex == m_cranes.size() - 1 && offset > 0)
+        if (offset > 0)
         {
-            offset -= m_cranes.size() * CRANE_INTERVAL;
+            offset -= craneCycleLength(crane->width());
+            LOG_DEBUG("Correcting crane offset to " << offset << '.');
         }
         craneOffset = offset;
     }
 
+    LOG_DEBUG("Added crane №" << craneIndex << '.');
     resetCrane(*crane.get(), std::abs(craneOffset));
     m_cranes[craneIndex] = crane;
 }
@@ -520,7 +558,7 @@ void World::resetCrane(Crane &crane, float offsetLength)
     const sf::Vector2f position =
         craneStartPosition(left, crane.width(), offsetLength);
     const float movementLength =
-        offsetLength + crane.width() + GAME_REGION_WIDTH;
+        offsetLength + craneCycleLength(crane.width());
     crane.reset(position, left, movementLength);
     std::uniform_int_distribution<std::mt19937::result_type> distributionColumn(
         0,
@@ -1000,7 +1038,7 @@ bool World::updateBox(Box &box, const Duration &elapsed)
         if (m_player.alive())
         {
             // NOTE: Можно сбивать ящик прыжком по диагонали.
-            if (!(m_player.direction() & Player::Direction::Up))
+            if (!m_godMode && !(m_player.direction() & Player::Direction::Up))
             {
                 // Ящик упал на игрока, не находящегося в прыжке => конец игры.
                 stop();
@@ -1052,7 +1090,6 @@ bool World::updateBox(Box &box, const Duration &elapsed)
 
 void World::updateCrane(Crane &crane, const Duration &elapsed)
 {
-    // FIXME: Устранить причину нарушения взаимного расположения кранов.
     crane.update(elapsed);
 
     if (crane.boxId() != NULL_ID)
@@ -1221,6 +1258,7 @@ Coordinate World::columnHeight(Coordinate column) const noexcept
 void World::renderCrane(Crane &crane, sf::RenderTarget &target) const
 {
     target.draw(crane, m_transform);
+
     if (crane.boxId() != NULL_ID)
     {
         const BoxPtr &box = m_boxes.at(crane.boxId());
