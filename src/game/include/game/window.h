@@ -48,6 +48,8 @@ public:
     sf::Vector2u windowSize() const noexcept;
     const sf::Vector2f& viewSize() const noexcept;
 
+    void renderClippingMask(sf::RenderWindow &target);
+
     void toggleFullscreen();
 
     void enableDebugView(bool value);
@@ -57,6 +59,7 @@ private:
     void create();
     void destroy();
     void onKeyPressed(const sf::Event::KeyEvent &key);
+    void updateClippingMask(const float aspectRatio);
 
 private:
     sf::RenderWindow m_window;
@@ -71,6 +74,14 @@ private:
     ResizeCallback m_resizeCallback;
     KeyCallback m_keyPressCallback;
     KeyCallback m_keyReleaseCallback;
+
     bool m_isDone{ false };
     bool m_isFullscreen{ false };
+
+    /// Маска из двух прямоугольников, прикрывающая объекты,
+    /// выходящие за пределы виртуального экрана.
+    /// TODO: использовать готовое решение в SFML 3:
+    /// https://github.com/SFML/SFML/pull/1451
+    sf::RectangleShape m_mask1;
+    sf::RectangleShape m_mask2;
 };

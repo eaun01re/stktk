@@ -4,7 +4,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Declare project.
-project(stktk VERSION 0.1)
+project(stktk VERSION 0.2)
 set(PROJECT_DISPLAY_NAME "${PROJECT_NAME}")
 add_definitions(-DPROJECT_NAME="${PROJECT_DISPLAY_NAME}")
 add_definitions(-DPROJECT_NAME_FULL="${PROJECT_DISPLAY_NAME}")
@@ -26,7 +26,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
         -Werror")
 endif()
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /utf-8")
 
     # Statically link the runtime libraries.
     # Not actually required since it doesn't link api-ms-win-core* libraries!

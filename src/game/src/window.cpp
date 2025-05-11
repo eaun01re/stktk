@@ -41,6 +41,9 @@ void Window::setup(const std::string &title)
     create();
 
     m_view = sf::View(sf::FloatRect(0, 0, SCREEN_SIZE.x, SCREEN_SIZE.y));
+
+    m_mask1.setFillColor(sf::Color::Black);
+    m_mask2.setFillColor(sf::Color::Black);
 }
 
 
@@ -73,6 +76,30 @@ void Window::onKeyPressed(const sf::Event::KeyEvent &key)
     }
 
     m_keyPressCallback(key);
+}
+
+
+void Window::updateClippingMask(const float aspectRatio)
+{
+    const sf::Vector2f &viewSize = m_view.getSize();
+
+    sf::Vector2f maskSize;
+    if (aspectRatio > ASPECT_RATIO)
+    {
+        // Ширина больше. Маски слева и справа.
+        maskSize = sf::Vector2f((viewSize.x - SCREEN_SIZE.x) / 2.0, viewSize.y);
+        m_mask1.setPosition(-maskSize.x, 0);
+        m_mask2.setPosition(float(SCREEN_SIZE.x), 0);
+    }
+    else
+    {
+        // Высота больше. Маски сверху и снизу.
+        maskSize = sf::Vector2f(viewSize.x, (viewSize.y - SCREEN_SIZE.y) / 2.0);
+        m_mask1.setPosition(0, -maskSize.y);
+        m_mask2.setPosition(0, float(SCREEN_SIZE.y));
+    }
+    m_mask1.setSize(maskSize);
+    m_mask2.setSize(maskSize);
 }
 
 
@@ -145,9 +172,11 @@ void Window::resize(const sf::Vector2u &size)
     }
     m_view.setSize(viewSize.x, viewSize.y);
 
+    updateClippingMask(aspectRatio);
+
     if (m_viewDebug.has_value())
     {
-        m_viewDebug.value().setSize(size.x, size.y);
+        m_viewDebug = sf::View(sf::FloatRect(0, 0, size.x, size.y));
     }
 }
 
@@ -161,6 +190,13 @@ sf::Vector2u Window::windowSize() const noexcept
 const sf::Vector2f& Window::viewSize() const noexcept
 {
     return m_view.getSize();
+}
+
+
+void Window::renderClippingMask(sf::RenderWindow &target)
+{
+    target.draw(m_mask1);
+    target.draw(m_mask2);
 }
 
 

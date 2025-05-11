@@ -50,9 +50,6 @@ void Game::restartClock()
 void Game::setup()
 {
     restartClock();
-
-    m_maskLeft.setFillColor(sf::Color::Black);
-    m_maskRight.setFillColor(sf::Color::Black);
 }
 
 
@@ -75,15 +72,6 @@ void Game::onWindowResized(const sf::Vector2u &size)
 {
     LOG_DEBUG("Window is resized to " << size.x << 'x' << size.y << '.');
     m_window.resize(size);
-
-    // Обновление обрезающей области.
-    // TODO: Обрезать и по вертикали?
-    const sf::Vector2f &viewSize = m_window.viewSize();
-    const sf::Vector2f maskSize((viewSize.x - SCREEN_SIZE.x) / 2, viewSize.y);
-    m_maskLeft.setSize(maskSize);
-    m_maskRight.setSize(maskSize);
-    m_maskLeft.setPosition(-maskSize.x, 0);
-    m_maskRight.setPosition(float(SCREEN_SIZE.x), 0);
 }
 
 
@@ -139,28 +127,19 @@ void Game::update()
 
 void Game::render()
 {
-    // Clear.
     m_window.beginDraw();
 
-    sf::RenderWindow& target = m_window.gameWindow();
+    sf::RenderWindow &target = m_window.gameWindow();
     target.draw(*m_screen);
-    renderClippingMask(target);
+    m_window.renderClippingMask(target);
 
     if (m_debug.has_value())
     {
-        sf::RenderWindow& targetDebug = m_window.debugWindow();
+        sf::RenderWindow &targetDebug = m_window.debugWindow();
         targetDebug.draw(m_debug.value());
     }
 
-    // Display.
     m_window.endDraw();
-}
-
-
-void Game::renderClippingMask(sf::RenderTarget &target)
-{
-    target.draw(m_maskLeft);
-    target.draw(m_maskRight);
 }
 
 

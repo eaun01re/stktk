@@ -47,7 +47,6 @@ private:
     void onKeyPressed(const sf::Event::KeyEvent &key);
     void onKeyReleased(const sf::Event::KeyEvent &key);
     void onStartScreenClosed(bool start);
-    void renderClippingMask(sf::RenderTarget &target);
     void exit();
 
 private:
@@ -55,13 +54,6 @@ private:
 
     std::shared_ptr<Screen> m_screen;
     std::optional<ScreenDebug> m_debug;
-
-    /// Маска из двух прямоугольников по бокам, прикрывающая объекты,
-    /// выходящие за пределывиртуального экрана.
-    /// TODO: использовать готовое решение в SFML 3:
-    /// https://github.com/SFML/SFML/pull/1451
-    sf::RectangleShape m_maskLeft;
-    sf::RectangleShape m_maskRight;
 
 #if defined(USE_SFML_CLOCK)
     sf::Clock m_clock;
