@@ -8,6 +8,7 @@
 #include <game/log.h>
 #include <game/objects/hourglass.h>
 #include <game/objects/number.h>
+#include <game/sound_system.h>
 
 #include "math/math.h"
 
@@ -1269,10 +1270,7 @@ void World::renderCrane(Crane &crane, sf::RenderTarget &target) const
 
 void World::playSound(ResourceLoader::SoundId id)
 {
-    // TODO: Сделать очередь из звуков, чтобы звук прыжка не перекрывал звук приземления.
-    ResourceLoader &resourceLoader = ResourceLoader::instance();
-    m_sound.setBuffer(*resourceLoader.sound(id));
-    m_sound.play();
+    SoundSystem::instance().playSound(id);
 }
 
 

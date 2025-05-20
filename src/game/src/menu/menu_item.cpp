@@ -8,10 +8,9 @@ namespace
 
 constexpr std::size_t CHECKBOX_FRAME_SIZE = 11;
 const sf::Vector2f TEXT_OFFSET(CHECKBOX_FRAME_SIZE + 3, -1);
-const sf::Vector2f MARK_OFFSET(1, 5);
 
 /*!
- * Возвращает список точек, составляющих рамку чекбокса.
+ * Возвращает список точек, составляющих квадратную рамку чекбокса.
  * \param[in] position Положение левого верхнего угла рамки чекбокса.
  * \return Список точек.
  */
@@ -38,18 +37,70 @@ std::list<sf::RectangleShape> makeCheckboxFrame(
 }
 
 /*!
- * Возвращает список точек, составляющих галочку чекбокса.
- * \param[in] position Положение левого верхнего угла рамки чекбокса.
+ * Возвращает список точек, составляющих круглую рамку радио-кнопки.
+ * \param[in] position Положение левого верхнего угла рамки радио-кнопки.
  * \return Список точек.
  */
-std::list<sf::RectangleShape> makeCheckboxMark(
+std::list<sf::RectangleShape> makeRadioButtonFrame(
     const sf::Vector2f &position,
     const sf::Color &color)
 {
     std::list<sf::RectangleShape> dots;
     sf::RectangleShape dot(sf::Vector2f(1, 1));
     dot.setFillColor(color);
-    const sf::Vector2f offset = position + MARK_OFFSET;
+
+    dot.setPosition(position + sf::Vector2f(0, 4));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(1, 2));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(2, 1));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(4, 0));
+    dots.push_back(dot);
+
+    dot.setPosition(position + sf::Vector2f(6, 0));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(8, 1));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(9, 2));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(10, 4));
+    dots.push_back(dot);
+
+    dot.setPosition(position + sf::Vector2f(0, 6));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(1, 8));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(2, 9));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(4, 10));
+    dots.push_back(dot);
+
+    dot.setPosition(position + sf::Vector2f(6, 10));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(8, 9));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(9, 8));
+    dots.push_back(dot);
+    dot.setPosition(position + sf::Vector2f(10, 6));
+    dots.push_back(dot);
+
+    return dots;
+}
+
+/*!
+ * Возвращает список точек, составляющих галочку чекбокса.
+ * \param[in] position Положение левого верхнего угла рамки чекбокса.
+ * \return Список точек.
+ */
+std::list<sf::RectangleShape> makeCheckMark(
+    const sf::Vector2f &position,
+    const sf::Color &color)
+{
+    std::list<sf::RectangleShape> dots;
+    sf::RectangleShape dot(sf::Vector2f(1, 1));
+    dot.setFillColor(color);
+    const sf::Vector2f offset = position + sf::Vector2f(1, 5);
     dot.setPosition(offset);
     dots.push_back(dot);
     dot.setPosition(offset + sf::Vector2f(0, 1));
@@ -78,14 +129,47 @@ std::list<sf::RectangleShape> makeCheckboxMark(
     return dots;
 }
 
+/*!
+ * Возвращает список точек, составляющих кружок радио-кнопки.
+ * \param[in] position Положение левого верхнего угла рамки радио-кнопки.
+ * \return Список точек.
+ */
+std::list<sf::RectangleShape> makeRadioMark(
+    const sf::Vector2f &position,
+    const sf::Color &color)
+{
+    std::list<sf::RectangleShape> dots;
+    sf::RectangleShape dot(sf::Vector2f(1, 1));
+    dot.setFillColor(color);
+
+    const sf::Vector2f offset = position + sf::Vector2f(4, 2);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3 + 2 * i; ++j)
+        {
+            dot.setPosition(offset + sf::Vector2f(-i + j, i));
+            dots.push_back(dot);
+            dot.setPosition(offset + sf::Vector2f(-i + j, 6 - i));
+            dots.push_back(dot);
+        }
+    }
+    for (int i = 0; i < 7; ++i)
+    {
+        dot.setPosition(offset + sf::Vector2f(i - 2, 3));
+        dots.push_back(dot);
+    }
+
+    return dots;
+}
+
 }
 
 
 MenuItem::MenuItem(
     const std::u32string &text,
-    bool checkbox)
+    Type type)
     : m_text(text)
-    , m_checkbox(checkbox)
+    , m_type(type)
 {
     update();
 }
@@ -125,7 +209,7 @@ bool MenuItem::checked() const noexcept
 
 void MenuItem::setChecked(bool value)
 {
-    if (value == m_checked)
+    if (m_type == Type::Simple || m_checked == value)
     {
         return;
     }
@@ -137,7 +221,7 @@ void MenuItem::setChecked(bool value)
     }
     else
     {
-        makeCheckboxMark();
+        makeCheckMark();
     }
 }
 
@@ -175,22 +259,46 @@ void MenuItem::update()
 {
     m_text.setPosition(
         m_position +
-        sf::Vector2f(m_checkbox ? TEXT_OFFSET.x : 0, TEXT_OFFSET.y));
+        sf::Vector2f(
+            m_type == Type::Simple ? 0 : TEXT_OFFSET.x,
+            TEXT_OFFSET.y));
 
-    if (m_checkbox)
+    if (m_type == Type::Simple)
     {
-        const sf::Color &color = m_selected ? BACKGROUND_COLOR : TEXT_COLOR;
+        return;
+    }
+    const sf::Color &color = m_selected ? BACKGROUND_COLOR : TEXT_COLOR;
+    switch (m_type)
+    {
+    case Type::CheckBox:
         m_checkboxFrame = makeCheckboxFrame(m_position, color);
-        if (m_checked)
-        {
-            makeCheckboxMark();
-        }
+        break;
+    case Type::RadioButton:
+        m_checkboxFrame = makeRadioButtonFrame(m_position, color);
+        break;
+    default:
+        break;
+    }
+
+    if (m_checked)
+    {
+        makeCheckMark();
     }
 }
 
 
-void MenuItem::makeCheckboxMark()
+void MenuItem::makeCheckMark()
 {
     const sf::Color &color = m_selected ? BACKGROUND_COLOR : TEXT_COLOR;
-    m_checkMark = ::makeCheckboxMark(m_position, color);
+    switch (m_type)
+    {
+    case Type::CheckBox:
+        m_checkMark = ::makeCheckMark(m_position, color);
+        break;
+    case Type::RadioButton:
+        m_checkMark = ::makeRadioMark(m_position, color);
+        break;
+    default:
+        break;
+    }
 }

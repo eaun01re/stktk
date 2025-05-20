@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <cstdint>
 #include <functional>
 #include <list>
 
@@ -20,9 +21,17 @@ class MenuItem final : public sf::Drawable
 {
 public:
     using Callback = std::function<void()>;
+    enum Type : std::uint8_t
+    {
+        Simple,
+        CheckBox,
+        RadioButton
+    };
 
 public:
-    explicit MenuItem(const std::u32string &text, bool checkbox);
+    explicit MenuItem(
+        const std::u32string &text,
+        Type type = MenuItem::Type::Simple);
 
     void draw(
         sf::RenderTarget& target,
@@ -39,11 +48,11 @@ public:
 
 private:
     void update();
-    void makeCheckboxMark();
+    void makeCheckMark();
 
 private:
     Text m_text;
-    bool m_checkbox{ false };
+    const Type m_type{ Type::Simple };
     bool m_checked{ false };
     bool m_selected{ false };
     sf::Vector2f m_position;

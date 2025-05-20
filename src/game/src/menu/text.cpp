@@ -9,13 +9,12 @@ namespace
 {
 
 /// Размерность текстуры в количестве спрайтов по горизонтали и вертикали.
-const sf::Vector2u TEXTURE_SIZE(33, 5);
+const sf::Vector2u TEXTURE_SIZE(33, 7);
 
-const sf::Vector2u CHARACTER_SIZE(7, 12);
+const sf::Vector2u GRID_CELL_SIZE(7, 12);
 
 /// Горизонтальный интервал между символами.
 constexpr unsigned int CHARACTER_GAP = 1;
-
 
 /// Ширины символов кириллицы в алфавитном порядке.
 /// Каждый символ описан 4 значениям:
@@ -23,22 +22,22 @@ constexpr unsigned int CHARACTER_GAP = 1;
 /// * широта обычного строчного символа,
 /// * широта жирного заглавного символа,
 /// * широта жирного строчного символа.
-const std::array<std::array<unsigned char, 4>, 33> CYRILLIC_CHARACTERS_WIDTHS =
+const std::array<std::array<std::uint8_t, 4>, 33> CYRILLIC_CHARACTERS_WIDTHS =
 {{
     { 5, 5, 5, 5 }, // 00, а
     { 5, 5, 5, 5 }, // 01, б
     { 5, 5, 5, 5 }, // 02, в
     { 5, 5, 5, 5 }, // 03, г
-    { 5, 5, 7, 6 }, // 04, д
+    { 7, 6, 7, 6 }, // 04, д
     { 5, 5, 5, 5 }, // 05, е
     { 5, 5, 5, 5 }, // 06, ё
-    { 5, 5, 7, 7 }, // 07, ж
+    { 7, 5, 7, 7 }, // 07, ж
     { 5, 5, 5, 5 }, // 08, з
     { 5, 5, 6, 6 }, // 09, и
     { 5, 5, 6, 6 }, // 10, й
     { 5, 5, 6, 5 }, // 11, к
     { 5, 5, 6, 5 }, // 12, л
-    { 5, 5, 7, 7 }, // 13, м
+    { 7, 7, 7, 7 }, // 13, м
     { 5, 5, 6, 6 }, // 14, н
     { 5, 5, 6, 5 }, // 15, о
     { 5, 5, 6, 5 }, // 16, п
@@ -51,37 +50,54 @@ const std::array<std::array<unsigned char, 4>, 33> CYRILLIC_CHARACTERS_WIDTHS =
     { 5, 5, 6, 6 }, // 23, ц
     { 5, 5, 6, 5 }, // 24, ч
     { 5, 5, 7, 6 }, // 25, ш
-    { 5, 5, 7, 7 }, // 26, щ
-    { 5, 5, 6, 6 }, // 27, ъ
-    { 5, 5, 7, 7 }, // 28, ы
+    { 6, 6, 7, 7 }, // 26, щ
+    { 6, 6, 6, 6 }, // 27, ъ
+    { 6, 6, 7, 7 }, // 28, ы
     { 5, 5, 5, 5 }, // 29, ь
     { 5, 5, 5, 5 }, // 30, э
-    { 5, 5, 7, 6 }, // 31, ю
+    { 6, 6, 7, 6 }, // 31, ю
     { 5, 5, 5, 5 }  // 32, я
 }};
+
+struct CharacterInfo
+{
+    sf::Vector2u location;
+    std::uint8_t width{ 0 };
+};
+
+/// Ширины специальных символов.
+const std::map<char32_t, CharacterInfo> MISC_CHARACTERS_WIDTHS =
+{
+    { '?', CharacterInfo{ sf::Vector2u(0, 0), 5 } },
+    { '.', CharacterInfo{ sf::Vector2u(1, 0), 3 } },
+    { ' ', CharacterInfo{ sf::Vector2u(2, 0), 3 } }
+};
 
 /// Ширина символов цифр в порядке возрастания.
 constexpr unsigned char DIGITS_CHARACTERS_WIDTH = 5;
 
-template<char32_t LetterA, char32_t LetterE, char32_t LetterYO>
-unsigned int letterNumber(char32_t c)
+unsigned int letterNumber(
+    char32_t c,
+    char32_t letterA,
+    char32_t letterE,
+    char32_t letterYo)
 {
-    if (c == LetterYO)
+    if (c == letterYo)
     {
-        return 15;
+        return 6;
     }
 
-    return c - LetterA + (c <= LetterE ? 0 : 1);
+    return c - letterA + (c <= letterE ? 0 : 1);
 }
 
 unsigned int upperCaseLetterNumber(char32_t c)
 {
-    return letterNumber<u'А', u'Е', u'Ё'>(c);
+    return letterNumber(c, u'А', u'Е', u'Ё');
 }
 
 unsigned int lowerCaseLetterNumber(char32_t c)
 {
-    return letterNumber<u'а', u'е', u'ё'>(c);
+    return letterNumber(c, u'а', u'е', u'ё');
 }
 
 
@@ -93,32 +109,44 @@ sf::IntRect spriteRectByCharacter(char32_t c, bool bold)
     if (c >= u'0' && c <= u'9')
     {
         rect = sf::IntRect(
-            c - u'0' + 1,
-            0,
+            c - u'0',
+            2 + boldOffset,
             DIGITS_CHARACTERS_WIDTH,
-            CHARACTER_SIZE.y);
+            GRID_CELL_SIZE.y);
     }
-    if ((c >= u'А' && c <= u'Я') || c == U'Ё')
+    else if ((c >= u'А' && c <= u'Я') || c == U'Ё')
     {
         const unsigned int letterNumber = upperCaseLetterNumber(c);
         rect = sf::IntRect(
             letterNumber,
-            2 + 2 * boldOffset,
+            4 + 2 * boldOffset,
             CYRILLIC_CHARACTERS_WIDTHS[letterNumber][2 * boldOffset],
-            CHARACTER_SIZE.y);
+            GRID_CELL_SIZE.y);
     }
-    if ((c >= u'а' && c <= u'я') || c == U'ё')
+    else if ((c >= u'а' && c <= u'я') || c == U'ё')
     {
         const unsigned int letterNumber = lowerCaseLetterNumber(c);
         rect = sf::IntRect(
             letterNumber,
-            3 + 2 * boldOffset,
+            5 + 2 * boldOffset,
             CYRILLIC_CHARACTERS_WIDTHS[letterNumber][1 + 2 * boldOffset],
-            CHARACTER_SIZE.y);
+            GRID_CELL_SIZE.y);
+    }
+    else
+    {
+        const auto it = MISC_CHARACTERS_WIDTHS.find(c);
+        if (it != MISC_CHARACTERS_WIDTHS.cend())
+        {
+            rect = sf::IntRect(
+                it->second.location.x,
+                it->second.location.y + boldOffset,
+                it->second.width,
+                GRID_CELL_SIZE.y);
+        }
     }
 
-    rect.left *= CHARACTER_SIZE.x;
-    rect.top *= CHARACTER_SIZE.y;
+    rect.left *= GRID_CELL_SIZE.x;
+    rect.top *= GRID_CELL_SIZE.y;
 
     return rect;
 }

@@ -207,8 +207,6 @@ private:
 
     bool m_paused{ true };
 
-    sf::Sound m_sound;
-
     bool m_debugMode{ false };
     bool m_godMode{ false };
 

@@ -29,8 +29,9 @@ void MenuLevel::setup()
 
     for (std::size_t i = 0; i < m_menuItems.size(); ++i)
     {
-        m_menuItems[i] =
-            std::make_shared<MenuItem>(MENU_ITEMS_CAPTIONS[i], true);
+        m_menuItems[i] = std::make_shared<MenuItem>(
+            MENU_ITEMS_CAPTIONS[i],
+            MenuItem::Type::RadioButton);
         m_menuItems[i]->setAction(
             false,
             { SELECT_CAPTION, [this, i](){ setCheckedItem(i); } });

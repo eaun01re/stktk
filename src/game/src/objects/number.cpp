@@ -57,4 +57,5 @@ void Number::init()
     m_frame.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Frame));
     m_frame.setColor(BACKGROUND_COLOR);
     m_text.setColor(TEXT_COLOR);
+    m_text.setBold(true);
 }
