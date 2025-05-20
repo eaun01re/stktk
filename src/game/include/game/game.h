@@ -25,7 +25,7 @@
 #include <game/screen_debug.h>
 
 
-class Game final
+class Game final : public IMenuObserver
 {
 public:
     explicit Game();
@@ -48,6 +48,7 @@ private:
     void onKeyReleased(const sf::Event::KeyEvent &key);
     void onStartScreenClosed(bool start);
     void exit();
+    void childClosing(bool result) override;
 
 private:
     Window m_window;

@@ -14,6 +14,7 @@ const sf::Vector2u SCREEN_SIZE(101, 64);
 constexpr unsigned char BOX_SIZE = 8;
 
 const sf::Color BACKGROUND_COLOR(217, 150, 32);
+const sf::Color TEXT_COLOR = sf::Color::Black;
 
 constexpr unsigned char BOXES_ROWS = 5;
 constexpr unsigned char BOXES_COLUMNS = 12;

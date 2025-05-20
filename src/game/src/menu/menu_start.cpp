@@ -1,19 +1,13 @@
 #include <game/menu/menu_start.h>
 
-#include <game/config.h>
+#include <game/menu/menu_options.h>
 #include <game/resource_loader.h>
 
 
-MenuStart::MenuStart(const ClosedCallback &closedCallback)
-    : m_closedCallback(closedCallback)
+MenuStart::MenuStart(IMenuObserver *parent)
+    : Menu(parent)
 {
     setup();
-}
-
-
-bool MenuStart::handleKeyPressed(const sf::Keyboard::Key key)
-{
-    return Menu::handleKeyPressed(key);
 }
 
 
@@ -21,15 +15,17 @@ void MenuStart::draw(
     sf::RenderTarget &target,
     sf::RenderStates states) const
 {
-    Menu::draw(target, states);
     target.draw(m_background);
+    Menu::draw(target, states);
 }
 
 
 void MenuStart::setup()
 {
     m_buttonLeft.setCaption(U"Начать");
+    m_buttonLeft.setAction([this](){ close(true); });
     m_buttonRight.setCaption(U"Опции");
+    m_buttonRight.setAction(std::bind(&MenuStart::openSubmenu, this));
 
     ResourceLoader &resourceLoader = ResourceLoader::instance();
     m_background.setTexture(
@@ -37,27 +33,17 @@ void MenuStart::setup()
 }
 
 
-void MenuStart::accept()
+void MenuStart::openSubmenu()
 {
-    Config &config = Config::instance();
-    config.cranesQuantity = 1;
-    config.sound = true;
-    m_closedCallback(true);
+    m_submenu.reset(new MenuOptions(this));
 }
 
 
-void MenuStart::onCloseActivated()
+void MenuStart::childClosing(bool result)
 {
-    m_closedCallback(false);
-}
-
-
-void MenuStart::onLeftActivated()
-{
-    accept();
-}
-
-
-void MenuStart::onRightActivated()
-{
+    if (result)
+    {
+        close(true);
+    }
+    Menu::childClosing(result);
 }

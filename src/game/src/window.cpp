@@ -10,6 +10,8 @@ const float ASPECT_RATIO = float(SCREEN_SIZE.x) / SCREEN_SIZE.y;
 
 constexpr int SCREEN_SIZE_MULTIPLIER = 8;
 
+const sf::Color CLIP_COLOR = sf::Color::Black;
+
 }
 
 
@@ -42,8 +44,8 @@ void Window::setup(const std::string &title)
 
     m_view = sf::View(sf::FloatRect(0, 0, SCREEN_SIZE.x, SCREEN_SIZE.y));
 
-    m_mask1.setFillColor(sf::Color::Black);
-    m_mask2.setFillColor(sf::Color::Black);
+    m_mask1.setFillColor(CLIP_COLOR);
+    m_mask2.setFillColor(CLIP_COLOR);
 }
 
 

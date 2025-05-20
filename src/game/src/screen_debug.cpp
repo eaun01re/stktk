@@ -38,7 +38,7 @@ void ScreenDebug::update(const Duration&)
     ss << "System time: " << formatTimeWithMilliseconds() << std::endl;
     ss << "Score: " << m_world->m_score << std::endl;
     ss << "Cranes:" << std::endl;
-    for (unsigned int i = 0; i < m_world->m_cranes.size(); ++i)
+    for (std::size_t i = 0; i < m_world->m_cranes.size(); ++i)
     {
         ss << ' ' << i << ": ";
         if (m_world->m_cranes[i] != nullptr)

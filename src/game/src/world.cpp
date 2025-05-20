@@ -475,7 +475,7 @@ void World::addCranes(std::uint8_t cranesQuantity)
         cranesQuantity,
         std::uint8_t(1),
         MAX_INITIAL_CRANES_QUANTITY);
-    for (unsigned int i = 0; i < cranesQuantity; ++i)
+    for (std::uint8_t i = 0; i < cranesQuantity; ++i)
     {
         addCrane();
     }
@@ -508,7 +508,7 @@ void World::addCrane()
         const float firstCraneOffset =
             std::abs(firstCrane->getPosition().x - craneStartPosition.x);
         float offset = 0;
-        for (unsigned int i = 1; i < m_cranes.size(); ++i)
+        for (std::size_t i = 1; i < m_cranes.size(); ++i)
         {
             if (m_cranes.at(i) != nullptr)
             {
@@ -540,7 +540,7 @@ void World::addCrane()
 std::size_t World::cranesQuantity() const noexcept
 {
     std::size_t cranesQuantity = 0;
-    for (unsigned int i = 0; i < m_cranes.size(); ++i)
+    for (std::size_t i = 0; i < m_cranes.size(); ++i)
     {
         if (m_cranes.at(i) != nullptr)
         {

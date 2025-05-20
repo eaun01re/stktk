@@ -56,6 +56,5 @@ void Number::init()
     ResourceLoader &resourceLoader = ResourceLoader::instance();
     m_frame.setTexture(*resourceLoader.texture(ResourceLoader::TextureId::Frame));
     m_frame.setColor(BACKGROUND_COLOR);
-
-    m_text.setColor(sf::Color::Black);
+    m_text.setColor(TEXT_COLOR);
 }

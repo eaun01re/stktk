@@ -81,7 +81,7 @@ unsigned int upperCaseLetterNumber(char32_t c)
 
 unsigned int lowerCaseLetterNumber(char32_t c)
 {
-    return letterNumber<u'а', u'б', u'ё'>(c);
+    return letterNumber<u'а', u'е', u'ё'>(c);
 }
 
 

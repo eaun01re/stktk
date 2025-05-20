@@ -8,24 +8,21 @@
 namespace
 {
 
-const sf::Color COLOR = sf::Color::Black;
-
 /// Возвращает список точек, составляющих текстуру шахматной доски.
 /// \code
 /// o o o o
 ///  o o o
 /// o o o o
 /// \endcode
-std::vector<sf::RectangleShape> makeDisabledButton(const sf::Vector2f &position)
+std::list<sf::RectangleShape> makeDisabledButton(const sf::Vector2f &position)
 {
-    std::vector<sf::RectangleShape> result;
-    result.reserve((BUTTON_SIZE.x + BUTTON_SIZE.y) / 2);
-    for (unsigned int y = 0; y < BUTTON_SIZE.y; ++y)
+    std::list<sf::RectangleShape> result;
+    for (std::size_t y = 0; y < BUTTON_SIZE.y; ++y)
     {
-        for (unsigned int x = y % 2; x < BUTTON_SIZE.x; x += 2)
+        for (std::size_t x = y % 2; x < BUTTON_SIZE.x; x += 2)
         {
             sf::RectangleShape dot(sf::Vector2f(1, 1));
-            dot.setFillColor(COLOR);
+            dot.setFillColor(TEXT_COLOR);
             dot.setPosition(position.x + x, position.y + y);
             result.push_back(dot);
         }
@@ -34,11 +31,11 @@ std::vector<sf::RectangleShape> makeDisabledButton(const sf::Vector2f &position)
 }
 
 
-std::vector<sf::RectangleShape> makeEnabledButton(const sf::Vector2f &position)
+std::list<sf::RectangleShape> makeEnabledButton(const sf::Vector2f &position)
 {
-    std::vector<sf::RectangleShape> result;
+    std::list<sf::RectangleShape> result;
     sf::RectangleShape rectangle(sf::Vector2f(BUTTON_SIZE.x, BUTTON_SIZE.y));
-    rectangle.setFillColor(COLOR);
+    rectangle.setFillColor(TEXT_COLOR);
     rectangle.setPosition(position);
     result.push_back(rectangle);
     return result;
@@ -65,6 +62,21 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates) const
     }
 
     target.draw(m_text);
+}
+
+
+void Button::setAction(const Callback &callback)
+{
+    m_callback = callback;
+}
+
+
+void Button::pressed()
+{
+    if (enabled() && m_callback)
+    {
+        m_callback();
+    }
 }
 
 

@@ -55,9 +55,8 @@ void Game::setup()
 
 std::shared_ptr<MenuStart> Game::makeStartScreen()
 {
-    std::shared_ptr<MenuStart> screen = std::make_shared<MenuStart>(
-        std::bind(&Game::onStartScreenClosed, this, std::placeholders::_1));
-    return screen;
+    std::shared_ptr<MenuStart> menuStart = std::make_shared<MenuStart>(this);
+    return menuStart;
 }
 
 
@@ -146,4 +145,10 @@ void Game::render()
 void Game::exit()
 {
     m_window.close();
+}
+
+
+void Game::childClosing(bool result)
+{
+    onStartScreenClosed(result);
 }
