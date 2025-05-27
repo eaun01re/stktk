@@ -19,11 +19,11 @@ namespace
 constexpr sf::Keyboard::Key KEY_PAUSE = sf::Keyboard::Key::Num0;
 constexpr sf::Keyboard::Key KEY_PAUSE2 = sf::Keyboard::Key::Numpad0;
 
-constexpr sf::Keyboard::Key KEY_RESTART = sf::Keyboard::Key::Space;
-
 constexpr sf::Keyboard::Key KEY_ADD_CRANE = sf::Keyboard::Key::C;
 
 constexpr sf::Keyboard::Key KEY_GOD_MODE = sf::Keyboard::Key::G;
+
+constexpr sf::Keyboard::Key KEY_BACK = sf::Keyboard::Key::Escape;
 
 
 /// Количество ящиков в начале игры.
@@ -268,11 +268,17 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates) const
 }
 
 
+boost::signals2::connection World::connectClose(const Slot &slot)
+{
+    return m_signalClose.connect(slot);
+}
+
+
 bool World::handleKeyPressed(const sf::Keyboard::Key key)
 {
     if (!m_player.alive())
     {
-        if (key == KEY_RESTART)
+        if (key == KEY_BACK)
         {
             start();
             return true;
@@ -286,14 +292,18 @@ bool World::handleKeyPressed(const sf::Keyboard::Key key)
         if (m_debugMode)
         {
             addCrane();
+            return true;
         }
         break;
     case KEY_GOD_MODE:
         m_godMode = !m_godMode;
-        break;
+        return true;
     case KEY_PAUSE:
     case KEY_PAUSE2:
         togglePause();
+        return true;
+    case KEY_BACK:
+        exit();
         return true;
     default:
         break;
@@ -1283,4 +1293,11 @@ void World::stop()
     NumberPtr number = std::make_shared<Number>(m_score);
     number->setPosition(SCORE_POSITION_STOPPED);
     m_scoreFigures.push_back(number);
+}
+
+
+void World::exit()
+{
+    LOG_DEBUG("Close game requested.");
+    m_signalClose();
 }

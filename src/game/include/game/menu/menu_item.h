@@ -2,25 +2,25 @@
 
 
 #include <cstdint>
-#include <functional>
 #include <list>
+
+#include <boost/signals2.hpp>
 
 #include <game/menu/text.h>
 
 
 struct Action
 {
-    using Callback = std::function<void()>;
+    using Signal = boost::signals2::signal<void()>;
 
     std::u32string caption;
-    Callback action;
+    Signal signal;
 };
 
 
 class MenuItem final : public sf::Drawable
 {
 public:
-    using Callback = std::function<void()>;
     enum Type : std::uint8_t
     {
         Simple,
@@ -38,7 +38,7 @@ public:
         sf::RenderStates states) const override;
 
     void setAction(bool left, const Action &action);
-    const Action& action(bool left) const noexcept;
+    Action& action(bool left);
 
     bool checked() const noexcept;
     void setChecked(bool value);

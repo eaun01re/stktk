@@ -1,7 +1,5 @@
 #include <game/menu/menu_level.h>
 
-#include <game/config.h>
-
 
 namespace
 {
@@ -16,8 +14,7 @@ const std::array<std::u32string, 3> MENU_ITEMS_CAPTIONS
 }
 
 
-MenuLevel::MenuLevel(IMenuObserver *parent)
-    : Menu(parent)
+MenuLevel::MenuLevel()
 {
     setup();
 }
@@ -32,9 +29,9 @@ void MenuLevel::setup()
         m_menuItems[i] = std::make_shared<MenuItem>(
             MENU_ITEMS_CAPTIONS[i],
             MenuItem::Type::RadioButton);
-        m_menuItems[i]->setAction(
-            false,
-            { SELECT_CAPTION, [this, i](){ setCheckedItem(i); } });
+        m_menuItems[i]->action(false).caption = SELECT_CAPTION;
+        m_menuItems[i]->action(false).signal.connect(
+            [this, i](){ setSelectedItem(i); });
     }
 
     setItems(
@@ -43,21 +40,6 @@ void MenuLevel::setup()
         m_menuItems[1],
         m_menuItems[2],
     });
-
-    setCheckedItem(Config::instance().cranesQuantity - 1);
-}
-
-
-void MenuLevel::onClosing()
-{
-    const std::size_t index = selectedItem();
-    if (index >= m_menuItems.size())
-    {
-        return;
-    }
-
-    Config &config = Config::instance();
-    config.cranesQuantity = index + 1;
 }
 
 
@@ -75,7 +57,7 @@ std::size_t MenuLevel::selectedItem() const noexcept
 }
 
 
-void MenuLevel::setCheckedItem(std::size_t index)
+void MenuLevel::setSelectedItem(std::size_t index)
 {
     if (index >= m_menuItems.size())
     {

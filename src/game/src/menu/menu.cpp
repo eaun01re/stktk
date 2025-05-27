@@ -1,7 +1,9 @@
-#include "game/log.h"
 #include <game/menu/menu.h>
 
+#include <boost/signals2.hpp>
+
 #include <game/consts.h>
+#include <game/log.h>
 
 
 namespace
@@ -107,8 +109,7 @@ std::list<sf::RectangleShape> makeFrame()
 }
 
 
-Menu::Menu(IMenuObserver *parent)
-    : m_parent(parent)
+Menu::Menu()
 {
     const unsigned int buttonTop = SCREEN_SIZE.y - BUTTON_SIZE.y;
     m_buttonLeft.setPosition(
@@ -120,11 +121,6 @@ Menu::Menu(IMenuObserver *parent)
 
 bool Menu::handleKeyPressed(const sf::Keyboard::Key key)
 {
-    if (m_submenu != nullptr)
-    {
-        return m_submenu->handleKeyPressed(key);
-    }
-
     switch (key)
     {
     case KEY_LEFT:
@@ -140,7 +136,7 @@ bool Menu::handleKeyPressed(const sf::Keyboard::Key key)
         moveSelection(true);
         return true;
     case KEY_BACK:
-        close(false);
+        close();
         return true;
     default:
         break;
@@ -150,14 +146,8 @@ bool Menu::handleKeyPressed(const sf::Keyboard::Key key)
 }
 
 
-void Menu::draw(sf::RenderTarget &target, sf::RenderStates states) const
+void Menu::draw(sf::RenderTarget &target, sf::RenderStates) const
 {
-    if (m_submenu != nullptr)
-    {
-        m_submenu->draw(target, states);
-        return;
-    }
-
     target.draw(m_buttonLeft);
     target.draw(m_buttonRight);
 
@@ -180,9 +170,9 @@ void Menu::draw(sf::RenderTarget &target, sf::RenderStates states) const
 }
 
 
-void Menu::setSubmenu(std::unique_ptr<Menu> submenu)
+boost::signals2::connection Menu::connectClose(const Slot &slot)
 {
-    m_submenu = std::move(submenu);
+    return m_signalClose.connect(slot);
 }
 
 
@@ -200,6 +190,7 @@ void Menu::moveSelection(bool down)
     }
 
     const int inc = down ? 1 : -1;
+    LOG_DEBUG("Move selection " << (down ? "down" : "up") << " requested.");
     m_currentItemIndex =
         (m_currentItemIndex + m_items.size() + inc) % m_items.size();
 
@@ -219,30 +210,22 @@ void Menu::moveSelection(bool down)
 
 void Menu::onLeftActivated()
 {
-    m_buttonLeft.pressed();
+    LOG_DEBUG("Left action requested.");
+    m_signalLeft();
 }
 
 
 void Menu::onRightActivated()
 {
-    m_buttonRight.pressed();
+    LOG_DEBUG("Right action requested.");
+    m_signalRight();
 }
 
 
-void Menu::onClosing()
+void Menu::close()
 {
-}
-
-
-void Menu::close(bool result)
-{
-    LOG_DEBUG("Closing menu " << this << ".");
-    onClosing();
-
-    if (m_parent != nullptr)
-    {
-        m_parent->childClosing(result);
-    }
+    LOG_DEBUG("Close action requested.");
+    m_signalClose();
 }
 
 
@@ -264,10 +247,19 @@ void Menu::setItems(const std::vector<std::shared_ptr<MenuItem>> &items)
 }
 
 
-void Menu::childClosing(bool)
+boost::signals2::connection Menu::connectLeft(const Slot &slot)
 {
-    LOG_DEBUG("Submenu closed.");
-    m_submenu.reset();
+    m_connectionLeft.disconnect();
+    m_connectionLeft = m_signalLeft.connect(slot);
+    return m_connectionLeft;
+}
+
+
+boost::signals2::connection Menu::connectRight(const Slot &slot)
+{
+    m_connectionRight.disconnect();
+    m_connectionRight = m_signalRight.connect(slot);
+    return m_connectionRight;
 }
 
 
@@ -284,10 +276,10 @@ void Menu::updateItems()
     }
 
     m_buttonLeft.setCaption(m_items[m_currentItemIndex]->action(true).caption);
-    m_buttonLeft.setAction(m_items[m_currentItemIndex]->action(true).action);
+    connectLeft(m_items[m_currentItemIndex]->action(true).signal);
 
     m_buttonRight.setCaption(m_items[m_currentItemIndex]->action(false).caption);
-    m_buttonRight.setAction(m_items[m_currentItemIndex]->action(false).action);
+    connectRight(m_items[m_currentItemIndex]->action(false).signal);
 }
 
 
@@ -296,12 +288,6 @@ void Menu::updateSelection()
     sf::Vector2f selectionPosition(FRAME_POSITION + FRAME_ITEMS_OFFSET);
     selectionPosition.y += SELECTION_SIZE.y * m_selectionPosition;
     m_selection->setPosition(selectionPosition);
-}
-
-
-void Menu::clearSubmenu()
-{
-    m_submenu.reset();
 }
 
 

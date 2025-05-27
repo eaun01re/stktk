@@ -8,12 +8,6 @@
 #include <game/menu/menu_item.h>
 
 
-struct IMenuObserver
-{
-    virtual void childClosing(bool result) = 0;
-};
-
-
 namespace
 {
 
@@ -22,29 +16,31 @@ const std::u32string SELECT_CAPTION = U"Выбор";
 }
 
 
-class Menu : public Screen, public IMenuObserver
+class Menu : public Screen
 {
 public:
-    using ClosedCallback = std::function<void(bool)>;
+    using Signal = boost::signals2::signal<void()>;
+    using Slot = Signal::slot_type;
 
 public:
-    explicit Menu(IMenuObserver *parent = nullptr);
+    explicit Menu();
     virtual ~Menu() = default;
     bool handleKeyPressed(const sf::Keyboard::Key key) override;
     void draw(
         sf::RenderTarget& target,
         sf::RenderStates states) const override;
     void setSubmenu(std::unique_ptr<Menu> submenu);
+    boost::signals2::connection connectClose(const Slot &slot);
 
 protected:
-    virtual void onClosing();
     void makeFrame();
     void moveSelection(bool down);
     void onLeftActivated();
     void onRightActivated();
-    void close(bool result);
+    void close();
     void setItems(const std::vector<std::shared_ptr<MenuItem>> &items);
-    void childClosing(bool argument) override;
+    boost::signals2::connection connectLeft(const Slot &slot);
+    boost::signals2::connection connectRight(const Slot &slot);
 
 private:
     void updateItems();
@@ -56,9 +52,11 @@ protected:
     Button m_buttonLeft;
     Button m_buttonRight;
 
-    IMenuObserver *m_parent{ nullptr };
-
-    std::unique_ptr<Menu> m_submenu;
+    Signal m_signalLeft;
+    Signal m_signalRight;
+    Signal m_signalClose;
+    boost::signals2::connection m_connectionLeft;
+    boost::signals2::connection m_connectionRight;
 
     std::list<sf::RectangleShape> m_frame;
 

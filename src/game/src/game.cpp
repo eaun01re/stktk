@@ -1,6 +1,7 @@
 #include <game/game.h>
 
 #include <iostream>
+#include <boost/bind/bind.hpp>
 
 #include <game/config.h>
 #include <game/log.h>
@@ -53,10 +54,21 @@ void Game::setup()
 }
 
 
-std::shared_ptr<MenuStart> Game::makeStartScreen()
+std::shared_ptr<MenuScreen> Game::makeStartScreen()
 {
-    std::shared_ptr<MenuStart> menuStart = std::make_shared<MenuStart>(this);
-    return menuStart;
+    std::shared_ptr<MenuScreen> menuScreen = std::make_shared<MenuScreen>();
+    menuScreen->connectClose(
+        boost::bind(&Game::onMenuScreenClosed, this, boost::placeholders::_1));
+    return menuScreen;
+}
+
+
+std::shared_ptr<World> Game::makeWorldScreen()
+{
+    std::shared_ptr<World> worldScreen = std::make_shared<World>();
+    worldScreen->connectClose(boost::bind(&Game::onWorldScreenClosed, this));
+    worldScreen->start(m_initialPosition);
+    return worldScreen;
 }
 
 
@@ -83,33 +95,6 @@ void Game::onKeyPressed(const sf::Event::KeyEvent &key)
 void Game::onKeyReleased(const sf::Event::KeyEvent &key)
 {
     m_screen->handleKeyReleased(key.code);
-}
-
-
-void Game::onStartScreenClosed(bool start)
-{
-    if (!start)
-    {
-        exit();
-        return;
-    }
-
-    std::shared_ptr<World> worldScreen = std::make_shared<World>();
-    worldScreen->start(m_initialPosition);
-    m_screen = worldScreen;
-
-#ifndef NDEBUG
-    m_debug = ScreenDebug(worldScreen);
-#endif
-
-    m_window.enableDebugView(m_debug.has_value());
-    worldScreen->setDebugMode(m_debug.has_value());
-}
-
-
-const Window& Game::window() const
-{
-    return m_window;
 }
 
 
@@ -142,13 +127,39 @@ void Game::render()
 }
 
 
-void Game::exit()
+bool Game::isDone() const noexcept
 {
-    m_window.close();
+    return m_window.isDone();
 }
 
 
-void Game::childClosing(bool result)
+void Game::onMenuScreenClosed(bool startGame)
 {
-    onStartScreenClosed(result);
+    if (!startGame)
+    {
+        exit();
+        return;
+    }
+
+    std::shared_ptr<World> worldScreen = makeWorldScreen();
+    m_screen = worldScreen;
+
+#ifndef NDEBUG
+    m_debug = ScreenDebug(worldScreen);
+#endif
+
+    m_window.enableDebugView(m_debug.has_value());
+    worldScreen->setDebugMode(m_debug.has_value());
+}
+
+
+void Game::onWorldScreenClosed()
+{
+    start();
+}
+
+
+void Game::exit()
+{
+    m_window.close();
 }

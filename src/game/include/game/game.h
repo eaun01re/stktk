@@ -20,12 +20,12 @@
 #include <memory>
 #include <optional>
 
-#include <game/menu/menu_start.h>
+#include <game/menu_screen.h>
 #include <game/window.h>
 #include <game/screen_debug.h>
 
 
-class Game final : public IMenuObserver
+class Game final
 {
 public:
     explicit Game();
@@ -35,20 +35,19 @@ public:
     void handleInput();
     void update();
     void render();
-
-    const Window& window() const;
-
+    bool isDone() const noexcept;
     void restartClock();
 
 private:
     void setup();
-    std::shared_ptr<MenuStart> makeStartScreen();
+    std::shared_ptr<MenuScreen> makeStartScreen();
+    std::shared_ptr<World> makeWorldScreen();
     void onWindowResized(const sf::Vector2u &size);
     void onKeyPressed(const sf::Event::KeyEvent &key);
     void onKeyReleased(const sf::Event::KeyEvent &key);
-    void onStartScreenClosed(bool start);
+    void onMenuScreenClosed(bool startGame);
+    void onWorldScreenClosed();
     void exit();
-    void childClosing(bool result) override;
 
 private:
     Window m_window;

@@ -65,21 +65,6 @@ void Button::draw(sf::RenderTarget &target, sf::RenderStates) const
 }
 
 
-void Button::setAction(const Callback &callback)
-{
-    m_callback = callback;
-}
-
-
-void Button::pressed()
-{
-    if (enabled() && m_callback)
-    {
-        m_callback();
-    }
-}
-
-
 const sf::Vector2f &Button::position() const
 {
     return m_position;

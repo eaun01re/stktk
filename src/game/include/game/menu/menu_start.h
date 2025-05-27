@@ -7,18 +7,12 @@
 class MenuStart final : public Menu
 {
 public:
-    explicit MenuStart(IMenuObserver *parent = nullptr);
+    explicit MenuStart();
     virtual ~MenuStart() = default;
 
-    void draw(
-        sf::RenderTarget& target,
-        sf::RenderStates states) const override;
+    boost::signals2::connection connectStart(const Slot &slot);
+    boost::signals2::connection connectOptions(const Slot &slot);
 
 private:
     void setup();
-    void openSubmenu();
-    void childClosing(bool result) override;
-
-private:
-    sf::Sprite m_background;
 };

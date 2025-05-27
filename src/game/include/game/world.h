@@ -7,6 +7,8 @@
 #include <random>
 #include <set>
 
+#include <boost/signals2.hpp>
+
 #include <SFML/Graphics.hpp>
 
 #include "screen.h"
@@ -33,6 +35,10 @@ class World final : public Screen
     friend class ScreenDebug;
 
 public:
+    using Signal = boost::signals2::signal<void()>;
+    using Slot = Signal::slot_type;
+
+public:
     explicit World();
     void start(
         const std::optional<unsigned int> &positionIndex = std::nullopt);
@@ -44,6 +50,7 @@ public:
         sf::RenderTarget& target,
         sf::RenderStates states) const override;
 
+    boost::signals2::connection connectClose(const Slot &slot);
     void requestMovePlayer(const Player::Direction direction);
     void requestStopPlayer();
     void togglePause();
@@ -179,9 +186,12 @@ private:
     void renderCrane(Crane &crane, sf::RenderTarget &target) const;
     void playSound(ResourceLoader::SoundId id);
     void stop();
+    void exit();
 
 private:
     std::function<void(const Duration&)> m_updater;
+
+    Signal m_signalClose;
 
     Player m_player;
     Player::Direction m_playerRequestedDirection{ Player::Direction::None };

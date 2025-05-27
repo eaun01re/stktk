@@ -34,6 +34,17 @@ set(PROJECT_SOURCE_FILES
 
 # Dependencies.
 find_package(SFML 2.6 COMPONENTS graphics audio system REQUIRED)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+set(Boost_USE_STATIC_RUNTIME ON)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+    message(STATUS "Found BOOST ${Boost_VERSION_STRING}")
+    message(STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+    message(STATUS "Boost_LIBRARY_DIRS = ${Boost_LIBRARY_DIRS}")
+endif()
 
 # Add target.
 add_library(
@@ -43,7 +54,7 @@ add_library(
 
 target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
+    PUBLIC ${PROJECT_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS}
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
 # Link.
@@ -52,7 +63,8 @@ target_link_libraries(
     sfml-graphics
     sfml-audio
     sfml-window
-    sfml-system)
+    sfml-system
+    ${BOOST_LIBRARY_DIRS})
 
 # Increment version.
 set(VERSION_GENERATOR VersionGenerator)

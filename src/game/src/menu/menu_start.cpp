@@ -1,49 +1,26 @@
 #include <game/menu/menu_start.h>
 
-#include <game/menu/menu_options.h>
-#include <game/resource_loader.h>
 
-
-MenuStart::MenuStart(IMenuObserver *parent)
-    : Menu(parent)
+MenuStart::MenuStart()
 {
     setup();
 }
 
 
-void MenuStart::draw(
-    sf::RenderTarget &target,
-    sf::RenderStates states) const
+boost::signals2::connection MenuStart::connectStart(const Slot &slot)
 {
-    target.draw(m_background);
-    Menu::draw(target, states);
+    return connectLeft(slot);
+}
+
+
+boost::signals2::connection MenuStart::connectOptions(const Slot &slot)
+{
+    return connectRight(slot);
 }
 
 
 void MenuStart::setup()
 {
     m_buttonLeft.setCaption(U"Начать");
-    m_buttonLeft.setAction([this](){ close(true); });
     m_buttonRight.setCaption(U"Опции");
-    m_buttonRight.setAction(std::bind(&MenuStart::openSubmenu, this));
-
-    ResourceLoader &resourceLoader = ResourceLoader::instance();
-    m_background.setTexture(
-        *resourceLoader.texture(ResourceLoader::TextureId::Splash));
-}
-
-
-void MenuStart::openSubmenu()
-{
-    m_submenu.reset(new MenuOptions(this));
-}
-
-
-void MenuStart::childClosing(bool result)
-{
-    if (result)
-    {
-        close(true);
-    }
-    Menu::childClosing(result);
 }

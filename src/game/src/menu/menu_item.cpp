@@ -189,13 +189,7 @@ void MenuItem::draw(sf::RenderTarget &target, sf::RenderStates) const
 }
 
 
-void MenuItem::setAction(bool left, const Action &action)
-{
-    (left ? m_actionLeft : m_actionRight) = action;
-}
-
-
-const Action& MenuItem::action(bool left) const noexcept
+Action& MenuItem::action(bool left)
 {
     return left ? m_actionLeft : m_actionRight;
 }

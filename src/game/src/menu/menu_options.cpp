@@ -1,13 +1,7 @@
 #include <game/menu/menu_options.h>
 
-#include <game/config.h>
-#include <game/log.h>
-#include <game/menu/menu_level.h>
-#include <game/sound_system.h>
 
-
-MenuOptions::MenuOptions(IMenuObserver *parent)
-    : Menu(parent)
+MenuOptions::MenuOptions()
 {
     setup();
 }
@@ -17,59 +11,57 @@ void MenuOptions::setup()
 {
     makeFrame();
 
-    std::shared_ptr<MenuItem> menuStart =
-        std::make_shared<MenuItem>(U"Начать");
-    menuStart->setAction(
-        false,
-        { SELECT_CAPTION, [this](){ close(true); } });
+    m_menuItemStart = std::make_shared<MenuItem>(U"Начать");
+    m_menuItemStart->action(false).caption = SELECT_CAPTION;
 
-    std::shared_ptr<MenuItem> menuLevel =
-        std::make_shared<MenuItem>(U"Уровень");
-    menuLevel->setAction(
-        false,
-        { SELECT_CAPTION, std::bind(&MenuOptions::openSubmenu, this) });
+    m_menuItemSelectLevel = std::make_shared<MenuItem>(U"Уровень");
+    m_menuItemSelectLevel->action(false).caption = SELECT_CAPTION;
 
-    std::shared_ptr<MenuItem> menuScores =
-        std::make_shared<MenuItem>(U"Лучшие результ.");
-    menuScores->setAction(
-        false,
-        { SELECT_CAPTION, [](){ LOG_DEBUG("TODO: Not implemented"); } });
+    m_menuHighScore = std::make_shared<MenuItem>(U"Лучшие результ.");
+    m_menuHighScore->action(false).caption = SELECT_CAPTION;
 
-    m_menuSound = std::make_shared<MenuItem>(
+    m_menuItemSound = std::make_shared<MenuItem>(
         U"Звуки",
         MenuItem::Type::CheckBox);
-    m_menuSound->setChecked(Config::instance().sound);
-    m_menuSound->setAction(
-        false,
-        {
-            U"Измен.",
-            [this](){ m_menuSound->setChecked(!m_menuSound->checked()); }
-        });
+    m_menuItemSound->action(false).caption = U"Измен.";
+    m_menuItemSound->action(false).signal.connect(
+        [this](){ m_menuItemSound->setChecked(!m_menuItemSound->checked()); });
 
     setItems(
     {
-        menuStart,
-        menuLevel,
-        menuScores,
-        m_menuSound,
+        m_menuItemStart,
+        m_menuItemSelectLevel,
+        m_menuHighScore,
+        m_menuItemSound
     });
 }
 
 
-void MenuOptions::openSubmenu()
+boost::signals2::connection MenuOptions::connectStart(const Slot &slot)
 {
-    m_submenu.reset(new MenuLevel(this));
+    return m_menuItemStart->action(false).signal.connect(slot);
 }
 
 
-void MenuOptions::onClosing()
+boost::signals2::connection MenuOptions::connectSelectLevel(const Slot &slot)
 {
-    Config::instance().sound = m_menuSound->checked();
-    SoundSystem::instance().setEnabled(m_menuSound->checked());
+    return m_menuItemSelectLevel->action(false).signal.connect(slot);
 }
 
 
-void MenuOptions::childClosing(bool result)
+boost::signals2::connection MenuOptions::connectViewHighScore(const Slot &slot)
 {
-    Menu::childClosing(result);
+    return m_menuHighScore->action(false).signal.connect(slot);
+}
+
+
+bool MenuOptions::soundEnabled() const noexcept
+{
+    return m_menuItemSound->checked();
+}
+
+
+void MenuOptions::setSoundEnabled(bool value)
+{
+    m_menuItemSound->setChecked(value);
 }
