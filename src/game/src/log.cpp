@@ -86,6 +86,12 @@ void Log::setPath(const std::optional<std::filesystem::path> &path)
 }
 
 
+void Log::setMinimumSeverity(Severity severity)
+{
+    m_minimumSeverity = severity;
+}
+
+
 void Log::write(
     const std::string &message,
     const Severity severity,
@@ -93,6 +99,11 @@ void Log::write(
     const int line,
     const std::string &functionName)
 {
+    if (severity < m_minimumSeverity)
+    {
+        return;
+    }
+
     std::unique_lock<std::mutex> lock(m_mutex);
 
     std::ostream &stream = severity <= Log::Severity::Warning

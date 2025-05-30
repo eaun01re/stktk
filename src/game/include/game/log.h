@@ -32,6 +32,7 @@ public:
     static Log& instance();
 
     void setPath(const std::optional<std::filesystem::path> &path);
+    void setMinimumSeverity(Severity severity);
 
     /*!
      * Writes the specified message to log.
@@ -68,6 +69,7 @@ private:
 private:
     /// The name of the file with log.
     std::optional<std::filesystem::path> m_filename;
+    Severity m_minimumSeverity{ Trace };
     unsigned int m_lastLogSizeCheck{ 0 };
     mutable std::mutex m_mutex;
 };

@@ -12,11 +12,7 @@
 
 Game::Game()
     : m_window(
-        ProjectName
-#ifndef NDEBUG
-        + " " + ProjectVersion
-#endif
-        ,
+        ProjectName + " " + ProjectVersion,
         std::bind(&Game::onWindowResized, this, std::placeholders::_1),
         std::bind(&Game::onKeyPressed, this, std::placeholders::_1),
         std::bind(&Game::onKeyReleased, this, std::placeholders::_1))
@@ -76,6 +72,7 @@ void Game::start(const std::optional<unsigned int> &position)
 {
     m_initialPosition = position;
     m_screen = makeStartScreen();
+    m_debug = std::nullopt;
 }
 
 

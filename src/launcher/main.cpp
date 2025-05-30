@@ -74,6 +74,9 @@ int main(int argc, char *argv[])
 {
     // Включение записи лога в файл.
     Log::instance().setPath(".");
+#ifdef NDEBUG
+    Log::instance().setMinimumSeverity(Log::Severity::Info);
+#endif
 
     LOG_INFO("--- Starting " << ProjectName << ' ' << ProjectVersion << " ---");
 

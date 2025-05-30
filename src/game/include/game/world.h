@@ -29,7 +29,6 @@ constexpr std::size_t MAX_CRANES_QUANTITY = 5;
 struct InitialPosition;
 
 
-// FIXME: Можно толкнуть ящик под падающий ящик, в результате чего они сольются.
 class World final : public Screen
 {
     friend class ScreenDebug;
@@ -184,6 +183,12 @@ private:
      */
     Coordinate columnHeight(Coordinate column) const noexcept;
     void renderCrane(Crane &crane, sf::RenderTarget &target) const;
+    /*!
+     * Возвращает высоту, на которой должен остановиться падающий ящик.
+     * \param[in] box Падающий ящик.
+     * \return Высота остановки.
+     */
+    float stackHeightUnderBox(const Box &box) const;
     void playSound(ResourceLoader::SoundId id);
     void stop();
     void exit();

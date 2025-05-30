@@ -241,7 +241,7 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates) const
             {
                 if (boxId == NULL_ID)
                 {
-                    break;
+                    continue;
                 }
                 const BoxPtr &box = m_boxes.at(boxId);
                 target.draw(*box, m_transform);
@@ -818,7 +818,7 @@ bool World::canPlayerMoveDiagonal(
         // Ограничение ящиками в соседней колонке.
         // В момент нахождения в наивысшей точке прыжка
         // игрок не должен касаться ящика головой.
-        if (std::abs(int(boxColumn.value()) - int(column)) == 1 &&
+        if (int(boxColumn.value()) - int(column) == k &&
             box->getPosition().y - BOX_SIZE
             < m_player.getPosition().y + Player::height() + BOX_SIZE)
         {
@@ -829,7 +829,7 @@ bool World::canPlayerMoveDiagonal(
         // Ящик не ограничивает прыжок, если он еще падает, но либо успеет
         // приземлиться к моменту когда игрок будет на него становиться, либо
         // будет ещё достаточно высоко и не коснётся игрока в конце прыжка.
-        if (std::abs(int(boxColumn.value()) - int(column)) == 2 &&
+        if (int(boxColumn.value()) - int(column) == 2 * k &&
             (box->getPosition().y >= m_player.getPosition().y + BOX_SIZE) &&
             (box->getPosition().y - 2 * BOX_SIZE
              < m_player.getPosition().y + Player::height() + BOX_SIZE))
@@ -1063,23 +1063,8 @@ bool World::updateBox(Box &box, const Duration &elapsed)
     }
 
     // Проверка необходимости начала/остановки падения.
-    const std::optional<Coordinate> boxColumn = box.column();
-    float columnHeight = 0;
-    if (!boxColumn.has_value())
-    {
-        // Ящик находится между колонками.
-        const float column = box.getPosition().x / BOX_SIZE;
-        Coordinate column1 = std::floor(column);
-        Coordinate column2 = std::ceil(column);
-        columnHeight = std::max(
-            this->columnHeight(column1),
-            this->columnHeight(column2)) * BOX_SIZE;
-    }
-    else
-    {
-        columnHeight = this->columnHeight(boxColumn.value()) * BOX_SIZE;
-    }
-    if (box.getPosition().y <= columnHeight)
+    const float stopHeight = stackHeightUnderBox(box);
+    if (box.getPosition().y <= stopHeight)
     {
         if (box.isFalling())
         {
@@ -1112,11 +1097,11 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
             canDropBox(crane.boxId(), crane.dropColumn()))
         {
             dropBox(crane);
-            crane.drop();
         }
         else
         {
             box->setPosition(sum(crane.getPosition(), BOX_OFFSET));
+            box->update(elapsed);
         }
     }
 
@@ -1275,6 +1260,50 @@ void World::renderCrane(Crane &crane, sf::RenderTarget &target) const
         const BoxPtr &box = m_boxes.at(crane.boxId());
         target.draw(*box, m_transform);
     }
+}
+
+
+float World::stackHeightUnderBox(const Box &box) const
+{
+    float columnHeight = 0;
+
+    // Определение высоты стопки из неподвижных ящиков.
+    const std::optional<Coordinate> boxColumn = box.column();
+    if (!boxColumn.has_value())
+    {
+        // Ящик находится между колонками.
+        const float column = box.getPosition().x / BOX_SIZE;
+        const Coordinate column1 = std::floor(column);
+        const Coordinate column2 = std::ceil(column);
+        columnHeight = std::max(
+            this->columnHeight(column1),
+            this->columnHeight(column2)) * BOX_SIZE;
+    }
+    else
+    {
+        columnHeight = this->columnHeight(boxColumn.value()) * BOX_SIZE;
+    }
+
+    // Учёт движущихся ящиков.
+    // Ящик, перемещающийся горизонтально, останавливает падающий на него ящик.
+    for (auto it = m_boxesMoving.begin(); it != m_boxesMoving.end(); ++it)
+    {
+        const Object::Id movingBoxId = *it;
+        if (movingBoxId == box.id())
+        {
+            // Исключение сравнения ящика с самим собой.
+            continue;
+        }
+        const BoxPtr &movingBox = m_boxes.at(movingBoxId);
+        if (box.getPosition().y < movingBox->getPosition().y ||
+            std::abs(box.getPosition().x - movingBox->getPosition().x) >= BOX_SIZE)
+        {
+            continue;
+        }
+        columnHeight = std::max(columnHeight, movingBox->getPosition().y + BOX_SIZE);
+    }
+
+    return columnHeight;
 }
 
 
