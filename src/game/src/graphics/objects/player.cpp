@@ -1,9 +1,9 @@
-#include <game/objects/player.h>
+#include <game/graphics/objects/player.h>
 
 #include <random>
 
 #include <game/log.h>
-#include <game/objects/object.h>
+#include <game/graphics/objects/object.h>
 #include <game/resource_loader.h>
 
 #include "math/math.h"

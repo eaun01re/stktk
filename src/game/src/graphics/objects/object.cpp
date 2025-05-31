@@ -1,4 +1,4 @@
-#include <game/objects/object.h>
+#include <game/graphics/objects/object.h>
 
 #include <cmath>
 

@@ -1,4 +1,4 @@
-#include <game/menu/menu_start.h>
+#include <game/graphics/menu/menu_start.h>
 
 
 MenuStart::MenuStart()

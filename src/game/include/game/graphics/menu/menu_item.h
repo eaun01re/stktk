@@ -6,7 +6,7 @@
 
 #include <boost/signals2.hpp>
 
-#include <game/menu/text.h>
+#include <game/graphics/text.h>
 
 
 struct Action

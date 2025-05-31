@@ -3,7 +3,7 @@
 
 #include <list>
 
-#include <game/menu/text.h>
+#include <game/graphics/text.h>
 
 
 namespace

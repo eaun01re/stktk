@@ -1,4 +1,4 @@
-#include <game/menu/menu.h>
+#include <game/graphics/menu/menu.h>
 
 #include <boost/signals2.hpp>
 

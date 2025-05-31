@@ -1,9 +1,9 @@
 #pragma once
 
 
-#include <game/menu/menu_level.h>
-#include <game/menu/menu_start.h>
-#include <game/menu/menu_options.h>
+#include <game/graphics/menu/menu_level.h>
+#include <game/graphics/menu/menu_start.h>
+#include <game/graphics/menu/menu_options.h>
 
 
 class MenuScreen final : public Screen

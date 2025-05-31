@@ -3,7 +3,7 @@
 
 #include <array>
 
-#include <game/menu/menu.h>
+#include <game/graphics/menu/menu.h>
 
 
 class MenuLevel final : public Menu

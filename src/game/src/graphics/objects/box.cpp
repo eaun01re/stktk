@@ -1,4 +1,4 @@
-#include <game/objects/box.h>
+#include <game/graphics/objects/box.h>
 
 #include <random>
 #include <limits>

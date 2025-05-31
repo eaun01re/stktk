@@ -11,11 +11,12 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "screen.h"
-#include "objects/box.h"
-#include "objects/crane.h"
-#include "objects/player.h"
-#include "resource_loader.h"
+#include <game/screen.h>
+#include <game/graphics/objects/box.h>
+#include <game/graphics/objects/crane.h>
+#include <game/graphics/objects/player.h>
+#include <game/graphics/score.h>
+#include <game/resource_loader.h>
 
 
 namespace
@@ -217,8 +218,8 @@ private:
 
     /// Количество заработанных очков.
     unsigned int m_score{ 0 };
-    /// Графические примитивы, используемые для отображения очков.
-    std::vector<std::shared_ptr<sf::Drawable>> m_scoreFigures;
+    /// Графический примитив, отображающий счёт игры.
+    ScorePtr m_scoreFigure;
 
     bool m_paused{ true };
 

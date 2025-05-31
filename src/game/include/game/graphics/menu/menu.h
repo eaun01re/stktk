@@ -4,8 +4,8 @@
 #include <memory>
 
 #include <game/screen.h>
-#include <game/menu/button.h>
-#include <game/menu/menu_item.h>
+#include <game/graphics/menu/button.h>
+#include <game/graphics/menu/menu_item.h>
 
 
 namespace

@@ -1,8 +1,7 @@
-#include <game/objects/crane.h>
+#include <game/graphics/objects/crane.h>
 
 #include <cmath>
 
-#include <game/objects/object.h>
 #include <game/resource_loader.h>
 
 #include "math/math.h"

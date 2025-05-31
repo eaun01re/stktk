@@ -1,4 +1,4 @@
-#include <game/menu/text.h>
+#include <game/graphics/text.h>
 
 #include <array>
 

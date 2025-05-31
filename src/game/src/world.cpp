@@ -6,8 +6,6 @@
 #include <game/config.h>
 #include <game/initial_position.h>
 #include <game/log.h>
-#include <game/objects/hourglass.h>
-#include <game/objects/number.h>
 #include <game/sound_system.h>
 
 #include "math/math.h"
@@ -108,13 +106,6 @@ Player::Direction directionByKey(sf::Keyboard::Key key)
     }
 }
 
-std::shared_ptr<Hourglass> makeHourglass()
-{
-    std::shared_ptr<Hourglass> hourglass = std::make_shared<Hourglass>();
-    hourglass->setPosition(HOURGLASS_POSITION);
-    return hourglass;
-}
-
 }
 
 
@@ -130,7 +121,7 @@ void World::start(const std::optional<unsigned int> &positionIndex)
 {
     // Удаление старых объектов.
     clearObjects();
-    m_scoreFigures.clear();
+    m_scoreFigure.reset();
 
     // Инициализация ящиков.
     Coordinate playerColumn = 0;
@@ -258,9 +249,9 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates) const
     }
 
     // Отображение счёта.
-    for (const auto &figure : m_scoreFigures)
+    if (m_scoreFigure != nullptr)
     {
-        target.draw(*figure);
+        target.draw(*m_scoreFigure);
     }
 
     // Отображение переднего плана.
@@ -368,17 +359,18 @@ void World::setup()
 void World::resume()
 {
     m_updater = std::bind(&World::updateActive, this, std::placeholders::_1);
-    m_scoreFigures.clear();
+
+    m_scoreFigure.reset();
 }
 
 
 void World::pause()
 {
     m_updater = std::bind(&World::updatePaused, this, std::placeholders::_1);
-    NumberPtr number = std::make_shared<Number>(m_score);
-    number->setPosition(SCORE_POSITION_PAUSED);
-    m_scoreFigures.push_back(number);
-    m_scoreFigures.push_back(makeHourglass());
+
+    m_scoreFigure.reset(new Score(m_score));
+    m_scoreFigure->setFramePosition(SCORE_POSITION_PAUSED);
+    m_scoreFigure->addHourglass(HOURGLASS_POSITION);
 }
 
 
@@ -617,6 +609,11 @@ void World::updateActive(const Duration &elapsed)
         {
             addCrane();
         }
+    }
+
+    if (m_scoreFigure != nullptr)
+    {
+        m_scoreFigure->update(elapsed);
     }
 }
 
@@ -1319,9 +1316,9 @@ void World::stop()
     m_player.setAlive(false);
     playSound(ResourceLoader::SoundId::GameOver);
 
-    NumberPtr number = std::make_shared<Number>(m_score);
-    number->setPosition(SCORE_POSITION_STOPPED);
-    m_scoreFigures.push_back(number);
+    m_scoreFigure.reset(new Score(m_score));
+    m_scoreFigure->setFramePosition(SCORE_POSITION_STOPPED);
+    m_scoreFigure->enableBlinking(true);
 }
 
 

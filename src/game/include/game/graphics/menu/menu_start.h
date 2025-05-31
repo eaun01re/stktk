@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <game/menu/menu.h>
+#include <game/graphics/menu/menu.h>
 
 
 class MenuStart final : public Menu

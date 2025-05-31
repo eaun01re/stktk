@@ -3,7 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 
-#include <game/objects/object.h>
+#include <game/graphics/objects/object.h>
 
 
 namespace

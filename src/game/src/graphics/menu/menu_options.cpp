@@ -1,4 +1,4 @@
-#include <game/menu/menu_options.h>
+#include <game/graphics/menu/menu_options.h>
 
 
 MenuOptions::MenuOptions()

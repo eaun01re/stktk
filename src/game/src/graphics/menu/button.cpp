@@ -1,4 +1,4 @@
-#include <game/menu/button.h>
+#include <game/graphics/menu/button.h>
 
 #include <cmath>
 

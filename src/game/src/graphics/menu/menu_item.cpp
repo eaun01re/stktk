@@ -1,4 +1,4 @@
-#include <game/menu/menu_item.h>
+#include <game/graphics/menu/menu_item.h>
 
 #include <game/consts.h>
 
@@ -12,6 +12,7 @@ const sf::Vector2f TEXT_OFFSET(CHECKBOX_FRAME_SIZE + 3, -1);
 /*!
  * Возвращает список точек, составляющих квадратную рамку чекбокса.
  * \param[in] position Положение левого верхнего угла рамки чекбокса.
+ * \param[in] color Цвет рамки.
  * \return Список точек.
  */
 std::list<sf::RectangleShape> makeCheckboxFrame(
@@ -39,6 +40,7 @@ std::list<sf::RectangleShape> makeCheckboxFrame(
 /*!
  * Возвращает список точек, составляющих круглую рамку радио-кнопки.
  * \param[in] position Положение левого верхнего угла рамки радио-кнопки.
+ * \param[in] color Цвет рамки.
  * \return Список точек.
  */
 std::list<sf::RectangleShape> makeRadioButtonFrame(
@@ -91,6 +93,7 @@ std::list<sf::RectangleShape> makeRadioButtonFrame(
 /*!
  * Возвращает список точек, составляющих галочку чекбокса.
  * \param[in] position Положение левого верхнего угла рамки чекбокса.
+ * \param[in] color Цвет галочки.
  * \return Список точек.
  */
 std::list<sf::RectangleShape> makeCheckMark(
@@ -132,6 +135,7 @@ std::list<sf::RectangleShape> makeCheckMark(
 /*!
  * Возвращает список точек, составляющих кружок радио-кнопки.
  * \param[in] position Положение левого верхнего угла рамки радио-кнопки.
+ * \param[in] color Цвет кружка.
  * \return Список точек.
  */
 std::list<sf::RectangleShape> makeRadioMark(
