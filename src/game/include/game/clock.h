@@ -22,7 +22,7 @@ Duration fromMicroseconds(signed long long microseconds);
  */
 std::string formatTime(
     const SystemTimePoint& timePoint = std::chrono::system_clock::now(),
-    const char* format = "%d.%m.%Y %H:%M:%S");
+    const char* format = "%Y.%m.%d %H:%M:%S");
 
 /*!
  * Converts the specified time point to a human-readable format.

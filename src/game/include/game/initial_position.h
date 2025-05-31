@@ -21,4 +21,5 @@ const std::vector<InitialPosition> INITIAL_POSITIONS
     InitialPosition{ 1, { 5, 0, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5 } },
     InitialPosition{ 4, { 1, 2, 0, 2, 1, 2, 1, 1, 1, 1, 1, 1 } },
     InitialPosition{ 3, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+    InitialPosition{ 9, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0 } },
 };

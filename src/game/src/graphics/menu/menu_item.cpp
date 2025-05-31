@@ -91,6 +91,29 @@ std::list<sf::RectangleShape> makeRadioButtonFrame(
 }
 
 /*!
+ * Возвращает список точек, составляющих горизонтальную пунктирную линию.
+ * \param[in] position Положение первой точки линии.
+ * \param[in] color Цвет линии.
+ * \return Список точек.
+ */
+std::list<sf::RectangleShape> makeDottedLine(
+    const sf::Vector2f &position,
+    const sf::Color &color)
+{
+    std::list<sf::RectangleShape> dots;
+    sf::RectangleShape dot(sf::Vector2f(1, 1));
+    dot.setFillColor(color);
+
+    for (int i = 0; i < 45; ++i)
+    {
+        dot.setPosition(position + sf::Vector2f(2 * i - 1, 5));
+        dots.push_back(dot);
+    }
+
+    return dots;
+}
+
+/*!
  * Возвращает список точек, составляющих галочку чекбокса.
  * \param[in] position Положение левого верхнего угла рамки чекбокса.
  * \param[in] color Цвет галочки.
@@ -181,7 +204,7 @@ MenuItem::MenuItem(
 
 void MenuItem::draw(sf::RenderTarget &target, sf::RenderStates) const
 {
-    for (const sf::RectangleShape &dot : m_checkboxFrame)
+    for (const sf::RectangleShape &dot : m_decoration)
     {
         target.draw(dot);
     }
@@ -242,7 +265,7 @@ void MenuItem::setSelected(bool value)
     const sf::Color &color = m_selected ? BACKGROUND_COLOR : TEXT_COLOR;
     m_text.setColor(color);
     m_text.setBold(m_selected);
-    for (sf::RectangleShape &dot : m_checkboxFrame)
+    for (sf::RectangleShape &dot : m_decoration)
     {
         dot.setFillColor(color);
     }
@@ -269,11 +292,13 @@ void MenuItem::update()
     switch (m_type)
     {
     case Type::CheckBox:
-        m_checkboxFrame = makeCheckboxFrame(m_position, color);
+        m_decoration = makeCheckboxFrame(m_position, color);
         break;
     case Type::RadioButton:
-        m_checkboxFrame = makeRadioButtonFrame(m_position, color);
+        m_decoration = makeRadioButtonFrame(m_position, color);
         break;
+    case Type::Empty:
+        m_decoration = makeDottedLine(m_position, color);
     default:
         break;
     }

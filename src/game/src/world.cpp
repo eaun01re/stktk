@@ -1183,6 +1183,10 @@ bool World::canDropBox(Object::Id boxId, Coordinate column) const
 void World::dropBox(Crane &crane)
 {
     m_boxesMoving.insert(crane.boxId());
+    // Нормализация положения сбрасываемого ящика по горизонтали, чтобы ящик,
+    // падающий в соседней колонке, не пересекался с ним по горизонтали
+    // и не упирался в него.
+    m_boxes[crane.boxId()]->normalizePosition(true, false);
     crane.drop();
     // Очки за сборс начисляются, если игрок жив.
     if (m_player.alive())

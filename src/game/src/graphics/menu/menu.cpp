@@ -15,10 +15,10 @@ constexpr sf::Keyboard::Key KEY_UP = sf::Keyboard::Key::Up;
 constexpr sf::Keyboard::Key KEY_DOWN = sf::Keyboard::Key::Down;
 constexpr sf::Keyboard::Key KEY_BACK = sf::Keyboard::Key::Escape;
 const sf::Vector2u FRAME_SIZE(
-    SCREEN_SIZE.x - 6,
+    SCREEN_SIZE.x - 7,
     SCREEN_SIZE.y - BUTTON_SIZE.y - 4);
 const sf::Vector2u FRAME_POSITION(
-    (SCREEN_SIZE.x - FRAME_SIZE.x) / 2,
+    (SCREEN_SIZE.x - FRAME_SIZE.x) / 2 + 1,
     (SCREEN_SIZE.y - BUTTON_SIZE.y - FRAME_SIZE.y) / 2);
 const sf::Vector2u FRAME_ITEMS_OFFSET(1, 4);
 const sf::Vector2f SELECTION_SIZE(FRAME_SIZE.x - 3, BUTTON_SIZE.y);
@@ -237,6 +237,15 @@ void Menu::setItems(const std::vector<std::shared_ptr<MenuItem>> &items)
     {
         m_selection.reset();
         return;
+    }
+
+    // Добавление пустого пункта меню для обозначения конца меню.
+    if (m_items.size() > 3)
+    {
+        std::shared_ptr<MenuItem> emptyItem = std::make_shared<MenuItem>(
+            U"",
+            MenuItem::Type::Empty);
+        m_items.push_back(emptyItem);
     }
 
     m_selection.reset(new sf::RectangleShape(SELECTION_SIZE));

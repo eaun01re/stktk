@@ -25,7 +25,8 @@ public:
     {
         Simple,
         CheckBox,
-        RadioButton
+        RadioButton,
+        Empty
     };
 
 public:
@@ -56,7 +57,7 @@ private:
     bool m_checked{ false };
     bool m_selected{ false };
     sf::Vector2f m_position;
-    std::list<sf::RectangleShape> m_checkboxFrame;
+    std::list<sf::RectangleShape> m_decoration;
     std::list<sf::RectangleShape> m_checkMark;
     Action m_actionLeft;
     Action m_actionRight;

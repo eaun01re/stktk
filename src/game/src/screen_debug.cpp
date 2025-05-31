@@ -44,6 +44,7 @@ void ScreenDebug::update(const Duration&)
         if (m_world->m_cranes[i] != nullptr)
         {
             ss  << (m_world->m_cranes[i]->isLeft() ? '<' : '>') << ' '
+                << (m_world->m_cranes[i]->boxId() != NULL_ID ? "b" : "_") << ' '
                 << m_world->m_cranes[i]->getPosition().x;
         }
         ss << std::endl;

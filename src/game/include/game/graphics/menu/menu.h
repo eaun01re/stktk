@@ -29,7 +29,6 @@ public:
     void draw(
         sf::RenderTarget& target,
         sf::RenderStates states) const override;
-    void setSubmenu(std::unique_ptr<Menu> submenu);
     boost::signals2::connection connectClose(const Slot &slot);
 
 protected:
