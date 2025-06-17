@@ -136,6 +136,7 @@ void Player::setDirection(Direction direction, bool push)
     const bool right = direction & Direction::Right;
     const bool up = direction & Direction::Up;
     const bool down = direction & Direction::Down;
+    // Нормаль направления ((-1, 0), (1, 0), (0, -1), (0, 1)).
     const sf::Vector2f directions(
         float(right) - float(left),
         float(up) - float(down));

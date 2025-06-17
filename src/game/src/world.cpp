@@ -738,9 +738,24 @@ bool World::canPlayerMoveHorizontal(
     // В соседней колонке нет падающих ящиков,
     // с которыми возможно взаимодействие.
 
+    const Coordinate nextColumn = column + (left ? -1 : 1);
+
+    // Взаимодействие с "левитирующим" ящиком, который был столкнут с более
+    // высокой стопки на менее высокую и только что закончил горизонтальное
+    // движение, но еще не начал падение.
+    const std::optional<Object::Id> levitatinngBoxId = levitationBoxId(nextColumn);
+    if (levitatinngBoxId.has_value())
+    {
+        const BoxPtr &levitatinngBox = m_boxes.at(levitatinngBoxId.value());
+        if (levitatinngBox->row().value() == row)
+        {
+            pushedBoxId = levitatinngBoxId.value();
+            return canPushBox(*levitatinngBox.get(), nextColumn, left);
+        }
+    }
+
     // Переход на соседнюю стопку без толкания ящика.
     // Игрок должен стоять на ящике, либо встать на ящик после перемещения.
-    const Coordinate nextColumn = column + (left ? -1 : 1);
     const Coordinate nextColumnHeight = columnHeight(nextColumn);
     const Coordinate currentColumnHeight = columnHeight(column);
     if (row == nextColumnHeight ||
@@ -751,7 +766,7 @@ bool World::canPlayerMoveHorizontal(
 
     // Переход на соседнюю стопку с толканием ящика.
     // Высота соседней стопки должна быть не более чем на 1 больше, чем у текущей.
-    if (row != nextColumnHeight - 1)
+    if (row + 1 != nextColumnHeight)
     {
         return false;
     }
@@ -759,6 +774,7 @@ bool World::canPlayerMoveHorizontal(
     // чем у текущей.
     const BoxPtr &topBox =
         m_boxes.at(m_boxesStatic.at(nextColumn).at(nextColumnHeight - 1));
+
     const bool canPush = canPushBox(*topBox.get(), nextColumn, left);
     if (canPush)
     {
@@ -1063,6 +1079,7 @@ bool World::updateBox(Box &box, const Duration &elapsed)
     const float stopHeight = stackHeightUnderBox(box);
     if (box.getPosition().y <= stopHeight)
     {
+        // Ниже падать некуда.
         if (box.isFalling())
         {
             box.stopFalling();
@@ -1070,10 +1087,10 @@ bool World::updateBox(Box &box, const Duration &elapsed)
     }
     else
     {
+        // Под ящиком пустота => можно падать.
         if (!box.isFalling())
         {
             box.move(Box::Direction::Down);
-            return false;
         }
     }
 
@@ -1088,10 +1105,9 @@ void World::updateCrane(Crane &crane, const Duration &elapsed)
     if (crane.boxId() != NULL_ID)
     {
         BoxPtr &box = m_boxes[crane.boxId()];
-        const std::optional<Coordinate> boxColumn = box->column();
-        if (boxColumn.has_value() &&
-            boxColumn.value() == crane.dropColumn() &&
-            canDropBox(crane.boxId(), crane.dropColumn()))
+        const float k = crane.isLeft() ? -1 : 1;
+        if ((k * (box->getPosition().x - crane.dropColumn() * BOX_SIZE) >= 0)
+            && canDropBox(crane.boxId(), crane.dropColumn()))
         {
             dropBox(crane);
         }
@@ -1305,6 +1321,26 @@ float World::stackHeightUnderBox(const Box &box) const
     }
 
     return columnHeight;
+}
+
+
+std::optional<Object::Id> World::levitationBoxId(
+    Coordinate column) const noexcept
+{
+    std::optional<Object::Id> result;
+    bool emptySpaceExists = false;
+    for (std::size_t row = 0; row < m_boxesStatic[column].size(); ++row)
+    {
+        if (m_boxesStatic[column][row] == NULL_ID)
+        {
+            emptySpaceExists = true;
+        }
+        else if (emptySpaceExists)
+        {
+            result = m_boxesStatic[column][row];
+        }
+    }
+    return result;
 }
 
 

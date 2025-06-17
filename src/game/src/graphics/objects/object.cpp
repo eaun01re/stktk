@@ -9,7 +9,41 @@ namespace
 {
 
 /// Точность, используемая для определения номера строки и колонки объекта.
-constexpr float COORDINATE_TOLERANCE = 0.01;
+constexpr float COORDINATE_TOLERANCE = 0.00001;
+
+/*!
+ * Возвращает нормализованную величину смещения, на которую должен
+ * переместиться объект.
+ * \param[in] movementLength Общее количество движения, назначенное объекту.
+ * \param[in] offset Смещение, на которое должен переместиться объект
+ * за один такт обновления.
+ * \return Нормализованная величинf смещения, обеспечивающая точное
+ * позиционирование.
+ */
+float normalizedOffset(const float movementLength, const float offset)
+{
+    if (movementLength == 0)
+    {
+        return 0;
+    }
+
+    float result = 0;
+    const float movementLengthLeft = movementLength - offset;
+    // Если после вычета смещения из количества движения, назначенного объекту,
+    // знак последнего не изменился и его модуль больше погрешности,
+    // то движение еще не завершено.
+    if (std::isless(movementLength, 0.0f) ==
+        std::isless(movementLengthLeft, 0.0f) &&
+        std::abs(movementLengthLeft) > COORDINATE_TOLERANCE)
+    {
+        result = offset;
+    }
+    else
+    {
+        result = movementLength;
+    }
+    return result;
+}
 
 }
 
@@ -156,37 +190,14 @@ void Object::move(const Duration &elapsed)
     }
 
     const double elapsedSeconds = elapsed.count();
-    sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
+    const sf::Vector2f offset = multiply(m_speed, elapsedSeconds);
+    const sf::Vector2f normalizedOffset(
+        ::normalizedOffset(m_movementLength.x, offset.x),
+        ::normalizedOffset(m_movementLength.y, offset.y));
+    sf::Sprite::move(normalizedOffset);
+    m_movementLength -= normalizedOffset;
 
-    // Горизонтальное движение.
-    if ((m_movementLength.x != 0 &&
-        std::isless(m_movementLength.x, 0.0f) ==
-        std::isless(m_movementLength.x - offset.x, 0.0f)))
-    {
-        sf::Sprite::move(offset.x, 0);
-        m_movementLength.x -= offset.x;
-    }
-    else
-    {
-        sf::Sprite::move(m_movementLength.x, 0);
-        m_movementLength.x = 0;
-    }
-
-    // Вертикальное движение.
-    if ((m_movementLength.y != 0 &&
-        std::isless(m_movementLength.y, 0.0f) ==
-        std::isless(m_movementLength.y - offset.y, 0.0f)))
-    {
-        sf::Sprite::move(0, offset.y);
-        m_movementLength.y -= offset.y;
-    }
-    else
-    {
-        sf::Sprite::move(0, m_movementLength.y);
-        m_movementLength.y = 0;
-    }
-
-    if (isTolerant(m_speed) && isNull(m_movementLength))
+    if (isNull(m_movementLength))
     {
         moveFinished();
     }

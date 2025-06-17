@@ -72,6 +72,5 @@ set(VERSION_DIR ${SOURCE_DIR}/include/game/version/)
 add_custom_target(
     ${VERSION_GENERATOR}
     COMMAND cmake -P ${VERSION_DIR}/make_build_number.cmake
-    WORKING_DIRECTORY "${VERSION_DIR}"
-)
+    WORKING_DIRECTORY "${VERSION_DIR}")
 add_dependencies(${PROJECT_NAME} ${VERSION_GENERATOR})
