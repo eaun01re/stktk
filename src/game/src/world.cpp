@@ -30,8 +30,6 @@ constexpr int INITIAL_BOX_QUANTITY = 12;
 constexpr Coordinate MAX_BOXES_IN_COLUMN = 2;
 /// Количество нижних рядов, на которых разрешено прыгать.
 constexpr int ROWS_WITH_ALLOWED_JUMP = 3;
-/// Максимальное количество кранов в начале игры.
-constexpr std::uint8_t MAX_INITIAL_CRANES_QUANTITY = 3;
 /// Расстояние в пикселях игрового мира между соседними ячейками для кранов.
 constexpr unsigned int CRANE_INTERVAL = 22;
 /// Интервал времени между появлениями кранов в начале игры.
@@ -1359,6 +1357,9 @@ void World::stop()
     m_scoreFigure.reset(new Score(m_score));
     m_scoreFigure->setFramePosition(SCORE_POSITION_STOPPED);
     m_scoreFigure->enableBlinking(true);
+
+    Config &config = Config::instance();
+    config.highScore = std::max(config.highScore, m_score);
 }
 
 

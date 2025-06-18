@@ -7,6 +7,7 @@
 #include <game/log.h>
 #include <game/world.h>
 #include <game/resource_loader.h>
+#include <game/serializer.h>
 #include <game/version/version.h>
 
 
@@ -46,6 +47,11 @@ void Game::restartClock()
 
 void Game::setup()
 {
+    if (!readConfig())
+    {
+        writeConfig();
+    }
+
     restartClock();
 }
 
@@ -153,6 +159,7 @@ void Game::onMenuScreenClosed(bool startGame)
 void Game::onWorldScreenClosed()
 {
     start();
+    writeConfig();
 }
 
 

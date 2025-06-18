@@ -3,6 +3,7 @@
 #include <game/config.h>
 #include <game/log.h>
 #include <game/resource_loader.h>
+#include <game/serializer.h>
 #include <game/sound_system.h>
 
 
@@ -100,6 +101,7 @@ void MenuScreen::setMenuOptions()
 void MenuScreen::closeMenuOptions()
 {
     saveSoundSetting();
+    writeConfig();
     setMenuStart();
 }
 
@@ -107,13 +109,14 @@ void MenuScreen::closeMenuOptions()
 void MenuScreen::closeMenuOptionsAndStart()
 {
     saveSoundSetting();
+    writeConfig();
     startGame();
 }
 
 
 void MenuScreen::saveSoundSetting()
 {
-    MenuOptions *menuOptions = static_cast<MenuOptions*>(m_menu.get());
+    const MenuOptions *menuOptions = static_cast<MenuOptions*>(m_menu.get());
     LOG_DEBUG("Set sound enabled: " << menuOptions->soundEnabled() << ".");
     Config::instance().sound = menuOptions->soundEnabled();
     SoundSystem::instance().setEnabled(menuOptions->soundEnabled());
@@ -138,7 +141,7 @@ void MenuScreen::setMenuSelectLevel()
 
 void MenuScreen::closeMenuLevel()
 {
-    MenuLevel *menuLevel = static_cast<MenuLevel*>(m_menu.get());
+    const MenuLevel *menuLevel = static_cast<MenuLevel*>(m_menu.get());
     Config::instance().cranesQuantity = menuLevel->selectedItem() + 1;
     LOG_DEBUG("Set level: " << int(Config::instance().cranesQuantity) << ".");
 
@@ -148,9 +151,11 @@ void MenuScreen::closeMenuLevel()
 
 std::unique_ptr<MenuHighScore> MenuScreen::makeMenuHighScore()
 {
-    std::unique_ptr<MenuHighScore> menuHighScore = std::make_unique<MenuHighScore>();
-    menuHighScore->connectClose(boost::bind(&MenuScreen::closeMenuHighScore, this));
-    menuHighScore->setHighScore(64883);
+    std::unique_ptr<MenuHighScore> menuHighScore =
+        std::make_unique<MenuHighScore>();
+    menuHighScore->connectClose(
+        boost::bind(&MenuScreen::closeMenuHighScore, this));
+    menuHighScore->setHighScore(Config::instance().highScore);
     return menuHighScore;
 }
 
@@ -164,6 +169,13 @@ void MenuScreen::setMenuHighScore()
 
 void MenuScreen::closeMenuHighScore()
 {
+    const MenuHighScore *menuHighScore =
+        static_cast<MenuHighScore*>(m_menu.get());
+    Config::instance().highScore = menuHighScore->highScore();
+    LOG_DEBUG(
+        "Set high score to "
+        << unsigned(Config::instance().highScore) << ".");
+
     setMenuOptions();
 }
 

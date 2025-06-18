@@ -16,6 +16,8 @@ public:
     void draw(
         sf::RenderTarget &target,
         sf::RenderStates states) const override;
+
+    unsigned int highScore() const noexcept;
     void setHighScore(unsigned int value);
 
 private:

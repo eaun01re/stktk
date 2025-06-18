@@ -42,6 +42,12 @@ void MenuHighScore::draw(
 }
 
 
+unsigned int MenuHighScore::highScore() const noexcept
+{
+    return m_highScore;
+}
+
+
 void MenuHighScore::setHighScore(unsigned int value)
 {
     m_highScore = value;
@@ -81,19 +87,21 @@ void MenuHighScore::setSecretText()
 void MenuHighScore::setup()
 {
     makeFrame();
-    m_text.setPosition(sf::Vector2f(SCREEN_SIZE.x / 2, TEXT_VERTICAL_POSITION));
-    m_text.setAlign(Text::Align::Center);
-    m_text.setBold(true);
-    setText(0);
 
     m_buttonRight.setCaption(U"ОК");
     connectRight(boost::bind(&MenuHighScore::close, this));
+
+    m_text.setPosition(sf::Vector2f(SCREEN_SIZE.x / 2, TEXT_VERTICAL_POSITION));
+    m_text.setAlign(Text::Align::Center);
+    m_text.setBold(true);
+    setText(m_highScore);
 }
 
 
 void MenuHighScore::deleteHighScore()
 {
-    setText(0);
+    m_highScore = 0;
+    setText(m_highScore);
     m_buttonLeft.setCaption(U"");
     m_connectionLeft.disconnect();
 }

@@ -4,6 +4,15 @@
 #include <cstdint>
 
 
+namespace
+{
+
+/// Максимальное количество кранов в начале игры.
+constexpr std::uint8_t MAX_INITIAL_CRANES_QUANTITY = 3;
+
+}
+
+
 class Config final
 {
 public:
@@ -25,4 +34,5 @@ private:
 public:
     std::uint8_t cranesQuantity{ 1 };
     bool sound{ true };
+    unsigned int highScore{ 0 };
 };

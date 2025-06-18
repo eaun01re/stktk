@@ -9,6 +9,7 @@
 #define STR(A) STRINGIZE(A)
 
 #define PROJECT_VERSION STR(PROJECT_VERSION_MAJOR.PROJECT_VERSION_MINOR.PROJECT_VERSION_REVISION.PROJECT_VERSION_BUILD)
+#define PROJECT_VERSION_MAJOR_MINOR STR(PROJECT_VERSION_MAJOR.PROJECT_VERSION_MINOR)
 
 
 extern std::string ProjectName;
@@ -19,4 +20,5 @@ extern int         ProjectVersionMajor;
 extern int         ProjectVersionMinor;
 extern std::string ProjectVersionRevision;
 extern int         ProjectVersionBuild;
+extern std::string ProjectVersionMajorMinor;
 extern std::string ProjectVersion;
