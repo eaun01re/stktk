@@ -35,7 +35,7 @@ public:
         Type type = MenuItem::Type::Simple);
 
     void draw(
-        sf::RenderTarget& target,
+        sf::RenderTarget &target,
         sf::RenderStates states) const override;
 
     void setAction(bool left, const Action &action);

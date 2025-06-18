@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <game/graphics/menu/menu_high_score.h>
 #include <game/graphics/menu/menu_level.h>
 #include <game/graphics/menu/menu_start.h>
 #include <game/graphics/menu/menu_options.h>
@@ -16,6 +17,7 @@ public:
     explicit MenuScreen();
     virtual ~MenuScreen() = default;
 
+    void update(const Duration &elapsed) override;
     void draw(
         sf::RenderTarget &target,
         sf::RenderStates states) const override;
@@ -39,7 +41,9 @@ private:
     void setMenuSelectLevel();
     void closeMenuLevel();
 
+    std::unique_ptr<MenuHighScore> makeMenuHighScore();
     void setMenuHighScore();
+    void closeMenuHighScore();
 
     void startGame();
     void exit();

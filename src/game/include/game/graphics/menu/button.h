@@ -19,10 +19,10 @@ class Button final : public sf::Drawable
 public:
     explicit Button(const std::u32string &caption = std::u32string());
     void draw(
-        sf::RenderTarget& target,
+        sf::RenderTarget &target,
         sf::RenderStates states) const override;
 
-    const sf::Vector2f& position() const;
+    const sf::Vector2f &position() const;
     void setPosition(const sf::Vector2f &position);
 
     void setCaption(const std::u32string &caption);

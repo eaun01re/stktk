@@ -12,6 +12,12 @@ MenuScreen::MenuScreen()
 }
 
 
+void MenuScreen::update(const Duration &elapsed)
+{
+    m_menu->update(elapsed);
+}
+
+
 void MenuScreen::draw(
     sf::RenderTarget &target,
     sf::RenderStates states) const
@@ -140,10 +146,25 @@ void MenuScreen::closeMenuLevel()
 }
 
 
+std::unique_ptr<MenuHighScore> MenuScreen::makeMenuHighScore()
+{
+    std::unique_ptr<MenuHighScore> menuHighScore = std::make_unique<MenuHighScore>();
+    menuHighScore->connectClose(boost::bind(&MenuScreen::closeMenuHighScore, this));
+    menuHighScore->setHighScore(64883);
+    return menuHighScore;
+}
+
+
 void MenuScreen::setMenuHighScore()
 {
     LOG_DEBUG("Activating menu High score.");
-    LOG_WARNING("TODO: Viewing high score is not implemented yet.");
+    m_menu = makeMenuHighScore();
+}
+
+
+void MenuScreen::closeMenuHighScore()
+{
+    setMenuOptions();
 }
 
 

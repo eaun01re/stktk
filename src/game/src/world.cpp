@@ -210,7 +210,7 @@ void World::movePlayer(const Player::Direction direction)
 }
 
 
-void World::draw(sf::RenderTarget& target, sf::RenderStates) const
+void World::draw(sf::RenderTarget &target, sf::RenderStates) const
 {
     target.draw(m_background);
 

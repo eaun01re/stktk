@@ -204,6 +204,13 @@ void Text::setText(const std::u32string &text)
 }
 
 
+void Text::setText(int number)
+{
+    const std::string valueText = std::to_string(number);
+    setText(std::u32string(valueText.cbegin(), valueText.cend()));
+}
+
+
 Text::Align Text::align() const noexcept
 {
     return m_align;

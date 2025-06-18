@@ -47,7 +47,7 @@ public:
     bool handleKeyPressed(const sf::Keyboard::Key key) override;
     void handleKeyReleased(const sf::Keyboard::Key key) override;
     void draw(
-        sf::RenderTarget& target,
+        sf::RenderTarget &target,
         sf::RenderStates states) const override;
 
     boost::signals2::connection connectClose(const Slot &slot);

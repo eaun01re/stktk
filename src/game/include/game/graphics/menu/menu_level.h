@@ -3,10 +3,10 @@
 
 #include <array>
 
-#include <game/graphics/menu/menu.h>
+#include <game/graphics/menu/menu_list.h>
 
 
-class MenuLevel final : public Menu
+class MenuLevel final : public MenuList
 {
 public:
     explicit MenuLevel();

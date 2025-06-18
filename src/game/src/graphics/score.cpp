@@ -79,8 +79,7 @@ void Score::addHourglass(const sf::Vector2f &position)
 void Score::setValue(unsigned int value)
 {
     value = std::clamp(value, MIN_VALUE, MAX_VALUE);
-    const std::string valueText = std::to_string(value);
-    m_text.setText(std::u32string(valueText.cbegin(), valueText.cend()));
+    m_text.setText(value);
 }
 
 

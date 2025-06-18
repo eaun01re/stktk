@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include <game/graphics/menu/menu.h>
+#include <game/graphics/menu/menu_list.h>
 
 
-class MenuOptions final : public Menu
+class MenuOptions final : public MenuList
 {
 public:
     explicit MenuOptions();

@@ -21,7 +21,7 @@ Duration fromMicroseconds(signed long long microseconds);
  * e.g. in yyyy.MM.dd HH:mm:ss format.
  */
 std::string formatTime(
-    const SystemTimePoint& timePoint = std::chrono::system_clock::now(),
+    const SystemTimePoint &timePoint = std::chrono::system_clock::now(),
     const char* format = "%Y.%m.%d %H:%M:%S");
 
 /*!
@@ -31,7 +31,7 @@ std::string formatTime(
  * in yyyy-MM-dd_HH-mm-ss format.
  */
 std::string formatTimeEscaped(
-    const SystemTimePoint& timePoint = std::chrono::system_clock::now());
+    const SystemTimePoint &timePoint = std::chrono::system_clock::now());
 
 /*!
  * Converts the specified time point to a human-readable format
@@ -40,4 +40,4 @@ std::string formatTimeEscaped(
  * \return The string representation of time point.
  */
 std::string formatTimeWithMilliseconds(
-    const SystemTimePoint& timePoint = std::chrono::system_clock::now());
+    const SystemTimePoint &timePoint = std::chrono::system_clock::now());

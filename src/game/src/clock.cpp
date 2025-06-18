@@ -11,7 +11,7 @@ Duration fromMicroseconds(signed long long microseconds)
 
 
 std::string formatTime(
-    const SystemTimePoint& timePoint,
+    const SystemTimePoint &timePoint,
     const char* format)
 {
     const time_t time = std::chrono::system_clock::to_time_t(timePoint);

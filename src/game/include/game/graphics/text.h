@@ -20,10 +20,10 @@ public:
 public:
     explicit Text(const std::u32string &text = std::u32string());
     void draw(
-        sf::RenderTarget& target,
+        sf::RenderTarget &target,
         sf::RenderStates states) const override;
 
-    const sf::Vector2f& position() const;
+    const sf::Vector2f &position() const;
     void setPosition(const sf::Vector2f &position);
 
     bool bold() const noexcept;
@@ -31,6 +31,7 @@ public:
 
     const std::u32string& text() const noexcept;
     void setText(const std::u32string &text);
+    void setText(int number);
 
     Align align() const noexcept;
     void setAlign(Align align);

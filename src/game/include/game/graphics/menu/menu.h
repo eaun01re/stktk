@@ -1,17 +1,25 @@
 #pragma once
 
 
-#include <memory>
+#include <boost/signals2.hpp>
+
+#include <game/consts.h>
 
 #include <game/screen.h>
 #include <game/graphics/menu/button.h>
-#include <game/graphics/menu/menu_item.h>
 
 
 namespace
 {
 
 const std::u32string SELECT_CAPTION = U"Выбор";
+
+const sf::Vector2u FRAME_SIZE(
+    SCREEN_SIZE.x - 7,
+    SCREEN_SIZE.y - BUTTON_SIZE.y - 4);
+const sf::Vector2u FRAME_POSITION(
+    (SCREEN_SIZE.x - FRAME_SIZE.x) / 2 + 1,
+    (SCREEN_SIZE.y - BUTTON_SIZE.y - FRAME_SIZE.y) / 2);
 
 }
 
@@ -27,25 +35,17 @@ public:
     virtual ~Menu() = default;
     bool handleKeyPressed(const sf::Keyboard::Key key) override;
     void draw(
-        sf::RenderTarget& target,
+        sf::RenderTarget &target,
         sf::RenderStates states) const override;
     boost::signals2::connection connectClose(const Slot &slot);
 
 protected:
     void makeFrame();
-    void moveSelection(bool down);
     void onLeftActivated();
     void onRightActivated();
     void close();
-    void setItems(const std::vector<std::shared_ptr<MenuItem>> &items);
     boost::signals2::connection connectLeft(const Slot &slot);
     boost::signals2::connection connectRight(const Slot &slot);
-
-private:
-    void updateItems();
-    void updateSelection();
-    void clearSubmenu();
-    std::size_t visibleItemIndex(std::size_t visibleIndex) const noexcept;
 
 protected:
     Button m_buttonLeft;
@@ -58,10 +58,4 @@ protected:
     boost::signals2::connection m_connectionRight;
 
     std::list<sf::RectangleShape> m_frame;
-
-    std::vector<std::shared_ptr<MenuItem>> m_items;
-    int m_currentItemIndex{ 0 };
-
-    std::unique_ptr<sf::RectangleShape> m_selection;
-    std::uint8_t m_selectionPosition{ 0 };
 };
