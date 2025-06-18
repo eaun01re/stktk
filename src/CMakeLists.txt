@@ -4,7 +4,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Declare project.
-project(stktk VERSION 0.2)
+project(stktk VERSION 1.0)
 set(PROJECT_DISPLAY_NAME "${PROJECT_NAME}")
 add_definitions(-DPROJECT_NAME="${PROJECT_DISPLAY_NAME}")
 add_definitions(-DPROJECT_NAME_FULL="${PROJECT_DISPLAY_NAME}")
