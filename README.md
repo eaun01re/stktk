@@ -1,6 +1,6 @@
-# Stack Attack
+# Stktk
 
-Stack Attack — аркадная игра, симулятор грузчика на складе. Присутствовала на мобильных телефонах Siemens
+Stktk — воссоздание аркадной игры Stack Attack, симулятора грузчика на складе, которая присутствовала на мобильных телефонах Siemens
 * ME45 https://www.mobile-review.com/review/siemens-s45.shtml
 * A50 https://www.gsmarena.com/siemens_a50-335.php
 * A51 https://www.gsmarena.com/siemens_a51-982.php
